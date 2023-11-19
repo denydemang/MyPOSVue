@@ -1,25 +1,53 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+
+import AdminLayout from '@/views/admin/layouts/AdminLayout.vue';
+import DashboardView from '@/views/admin/DashboardView';
+import MasterCategory from '@/views/admin/master/MasterCategory.vue';
+import MasterProduct from '@/views/admin/master/MasterProduct.vue';
+import MasterUser from '@/views/admin/master/MasterUser.vue';
+import RoleUser from '@/views/admin/master/RoleUser.vue';
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
-  },
-  {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+    component: AdminLayout,
+    redirect: {
+      name: 'admin'
+    },
+    children: [
+      {
+        path: 'admin',
+        name: 'admin',
+        component: DashboardView
+      },
+      {
+        path: '/admin/mastercategory',
+        name: 'mastercategory',
+        component: MasterCategory
+      },
+      {
+        path: '/admin/masterproduct',
+        name: 'masterproduct',
+        component: MasterProduct
+      },
+      {
+        path: '/admin/masteruser',
+        name: 'masteruser',
+        component: MasterUser
+      },
+      {
+        path: '/admin/roleuser',
+        name: 'roleuser',
+        component: RoleUser
+      }
+    ]
   }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
-})
+});
 
-export default router
+export default router;
