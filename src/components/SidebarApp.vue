@@ -17,6 +17,8 @@ const ispurchasereturn = ref(false);
 const ismastercustomer = ref(false);
 const issales = ref(false);
 const issalesreturn = ref(false);
+const isgrn = ref(false);
+const isinoutitem = ref(false);
 
 const isActive = async () => {
   // ADMIN MENU/DASHBOARD
@@ -77,7 +79,7 @@ const isActive = async () => {
     ispurchasereturn.value = false;
   }
   if (route.name != 'mastersupplier' && route.name != 'purchase' && route.name != 'purchasereturn') {
-    $('.dropdwonsalestrans').stop(true, true).slideUp();
+    $('.dropdwonpurchasetrans').stop(true, true).slideUp();
   }
   // SALES TRANSACTION
   // MENU TRANSACTION - SALES TRANSACTION - MASTER CUSTOMER
@@ -86,10 +88,34 @@ const isActive = async () => {
   } else {
     ismastercustomer.value = false;
   }
+  // MENU TRANSACTION - SALES TRANSACTION - SALES
   if (route.name == 'sales') {
     issales.value = true;
   } else {
     issales.value = false;
+  }
+  // MENU TRANSACTION - SALES TRANSACTION - SALES
+  if (route.name == 'salesreturn') {
+    issalesreturn.value = true;
+  } else {
+    issalesreturn.value = false;
+  }
+  if (route.name != 'mastercustomer' && route.name != 'sales' && route.name != 'salesreturn') {
+    $('.dropdwonsalestrans').stop(true, true).slideUp();
+  }
+
+  // MENU INVENTORY
+  // GOODS RECEIVE NOTE
+  if (route.name == 'grn') {
+    isgrn.value = true;
+  } else {
+    isgrn.value = false;
+  }
+  // INVENTORY - GOODS RECEIVE NOTE
+  if (route.name == 'inoutitem') {
+    isinoutitem.value = true;
+  } else {
+    isinoutitem.value = false;
   }
 };
 
@@ -143,55 +169,23 @@ onMounted(() => {
             <li :class="{ active: ispurchasereturn }"><RouterLink class="nav-link" :to="{ name: 'purchasereturn' }">Purchase Return</RouterLink></li>
           </ul>
         </li>
-        <li class="nav-item dropdown">
+        <li class="nav-item dropdown" :class="{ active: ismastercustomer | issales | issalesreturn }">
           <a href="#" class="nav-link has-dropdown"><i class="fas fa-th-large"></i> <span>Sales Transaction</span></a>
           <ul class="dropdown-menu dropdwonsalestrans">
-            <li><RouterLink class="nav-link" :to="{ name: 'masteruser' }">Master Customer</RouterLink></li>
-            <li><RouterLink class="nav-link" :to="{ name: 'masteruser' }">Sales</RouterLink></li>
-            <li><RouterLink class="nav-link" :to="{ name: 'masteruser' }">Sales Return</RouterLink></li>
+            <li :class="{ active: ismastercustomer }"><RouterLink class="nav-link" :to="{ name: 'mastercustomer' }">Master Customer</RouterLink></li>
+            <li :class="{ active: issales }"><RouterLink class="nav-link" :to="{ name: 'sales' }">Sales</RouterLink></li>
+            <li :class="{ active: issalesreturn }"><RouterLink class="nav-link" :to="{ name: 'salesreturn' }">Sales Return</RouterLink></li>
           </ul>
         </li>
         <li class="menu-header">Inventory</li>
-        <li class="nav-item">
-          <a href="#" class="nav-link has-dropdown"><i class="far fa-user"></i> <span>Goods Receive Notes</span></a>
+        <li class="nav-item" :class="{ active: isgrn }">
+          <RouterLink :to="{ name: 'grn' }" class="nav-link"><i class="far fa-user"></i> <span>Goods Receive Notes</span></RouterLink>
         </li>
-        <li class="nav-item dropdown">
-          <a href="#" class="nav-link has-dropdown"><i class="fas fa-exclamation"></i> <span>Errors</span></a>
-          <ul class="dropdown-menu">
-            <li><a class="nav-link" href="errors-503.html">503</a></li>
-            <li><a class="nav-link" href="errors-403.html">403</a></li>
-            <li><a class="nav-link" href="errors-404.html">404</a></li>
-            <li><a class="nav-link" href="errors-500.html">500</a></li>
-          </ul>
+        <li class="nav-item" :class="{ active: isinoutitem }">
+          <RouterLink :to="{ name: 'inoutitem' }" class="nav-link"><i class="far fa-user"></i> <span>IN OUT PRODUCT/ITEM</span></RouterLink>
         </li>
-        <li class="nav-item dropdown">
-          <a href="#" class="nav-link has-dropdown"><i class="fas fa-bicycle"></i> <span>Features</span></a>
-          <ul class="dropdown-menu">
-            <li><a class="nav-link" href="features-activities.html">Activities</a></li>
-            <li><a class="nav-link" href="features-post-create.html">Post Create</a></li>
-            <li><a class="nav-link" href="features-posts.html">Posts</a></li>
-            <li><a class="nav-link" href="features-profile.html">Profile</a></li>
-            <li><a class="nav-link" href="features-settings.html">Settings</a></li>
-            <li><a class="nav-link" href="features-setting-detail.html">Setting Detail</a></li>
-            <li><a class="nav-link" href="features-tickets.html">Tickets</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a href="#" class="nav-link has-dropdown"><i class="fas fa-ellipsis-h"></i> <span>Utilities</span></a>
-          <ul class="dropdown-menu">
-            <li><a href="utilities-contact.html">Contact</a></li>
-            <li><a class="nav-link" href="utilities-invoice.html">Invoice</a></li>
-            <li><a href="utilities-subscribe.html">Subscribe</a></li>
-          </ul>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="credits.html"><i class="fas fa-pencil-ruler"></i> <span>Credits</span></a>
-        </li>
+        <li class="menu-header">Reports</li>
       </ul>
-
-      <div class="mt-4 mb-4 p-3 hide-sidebar-mini">
-        <a href="https://getstisla.com/docs" class="btn btn-primary btn-lg btn-block btn-icon-split"> <i class="fas fa-rocket"></i> Documentation </a>
-      </div>
     </aside>
   </div>
 </template>

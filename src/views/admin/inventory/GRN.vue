@@ -4,8 +4,8 @@
   <div class="main-content">
     <section class="section">
       <div class="section-header d-flex justify-content-between">
-        <h1>Sales Return</h1>
-        <span class=""><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'salesreturn' }">salesreturn</router-link> </span>
+        <h1>Goods Receive Notes</h1>
+        <span class=""><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'grn' }">grn</router-link> </span>
       </div>
       <div class="row">
         <div class="col-lg-3 col-md-6 col-sm-6 col-12">
