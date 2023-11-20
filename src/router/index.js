@@ -6,6 +6,12 @@ import MasterCategory from '@/views/admin/master/MasterCategory.vue';
 import MasterProduct from '@/views/admin/master/MasterProduct.vue';
 import MasterUser from '@/views/admin/master/MasterUser.vue';
 import RoleUser from '@/views/admin/master/RoleUser.vue';
+import MasterSupplier from '@/views/admin/transaction/purchase/MasterSupplier.vue';
+import Purchase from '@/views/admin/transaction/purchase/Purchase.vue';
+import PurchaseReturn from '@/views/admin/transaction/purchase/PurchaseReturn.vue';
+import MasterCustomer from '@/views/admin/transaction/sales/MasterCustomer.vue';
+import Sales from '@/views/admin/transaction/sales/Sales.vue';
+import SalesReturn from '@/views/admin/transaction/sales/SalesReturn.vue';
 
 const routes = [
   {
@@ -40,7 +46,37 @@ const routes = [
         path: '/admin/roleuser',
         name: 'roleuser',
         component: RoleUser
-      }
+      },
+      {
+        path: '/admin/mastersupplier',
+        name: 'mastersupplier',
+        component: MasterSupplier
+      },
+      {
+        path: '/admin/purchase',
+        name: 'purchase',
+        component: Purchase
+      },
+      {
+        path: '/admin/purchasereturn',
+        name: 'purchasereturn',
+        component: PurchaseReturn
+      },
+      {
+        path: '/admin/mastercustomer',
+        name: 'mastercustomer',
+        component: MasterCustomer
+      },
+      {
+        path: '/admin/sales',
+        name: 'sales',
+        component: Sales
+      },
+      {
+        path: '/admin/salesreturn',
+        name: 'salesreturn',
+        component: SalesReturn
+      },
     ]
   }
 ];
