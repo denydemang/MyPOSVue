@@ -1,10 +1,12 @@
 import axios from 'axios';
+import decr from '@/myencription.js'
+
 
 const apiUrl = process.env.VUE_APP_API_URL;
 
 const checkuser = async () => {
   try {
-    const iduser = localStorage.getItem('id');
+    const iduser = decr.decrypt(localStorage.getItem('id'), '');
     const token = localStorage.getItem('token');
     if (!iduser || !token) {
       return false;
