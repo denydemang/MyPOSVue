@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import axios from 'axios';
 
 import AdminLayout from '@/views/admin/layouts/AdminLayout.vue';
 import DashboardView from '@/views/admin/DashboardView';
@@ -19,96 +20,187 @@ import Login from '@/views/Login.vue';
 
 const routes = [
   {
-    path: '/login',
-    name: 'login',
-    component: Login,
-  },
-  { 
     path: '/',
     name: 'home',
+    redirect: {
+      name: 'login'
+    }
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: Login
+  },
+  {
+    path: '/admin',
     component: AdminLayout,
+    meta: { requiresAuth: true },
     redirect: {
       name: 'admin'
     },
     children: [
       {
-        path: 'admin',
+        path: '',
         name: 'admin',
-        component: DashboardView
+        component: DashboardView,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/mastercategory',
+        path: 'mastercategory',
         name: 'mastercategory',
-        component: MasterCategory
+        component: MasterCategory,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/masterproduct',
+        path: 'masterproduct',
         name: 'masterproduct',
-        component: MasterProduct
+        component: MasterProduct,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/masteruser',
+        path: 'masteruser',
         name: 'masteruser',
-        component: MasterUser
+        component: MasterUser,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/roleuser',
+        path: 'roleuser',
         name: 'roleuser',
-        component: RoleUser
+        component: RoleUser,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/mastersupplier',
+        path: 'mastersupplier',
         name: 'mastersupplier',
-        component: MasterSupplier
+        component: MasterSupplier,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/purchase',
+        path: 'purchase',
         name: 'purchase',
-        component: Purchase
+        component: Purchase,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/purchasereturn',
+        path: 'purchasereturn',
         name: 'purchasereturn',
-        component: PurchaseReturn
+        component: PurchaseReturn,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/mastercustomer',
+        path: 'mastercustomer',
         name: 'mastercustomer',
-        component: MasterCustomer
+        component: MasterCustomer,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/sales',
+        path: 'sales',
         name: 'sales',
-        component: Sales
+        component: Sales,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/salesreturn',
+        path: 'salesreturn',
         name: 'salesreturn',
-        component: SalesReturn
+        component: SalesReturn,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/grn',
+        path: 'grn',
         name: 'grn',
-        component: GRN
+        component: GRN,
+        meta: { requiresAuth: true }
       },
       {
-        path: '/admin/inoutitem',
+        path: 'inoutitem',
         name: 'inoutitem',
-        component: INOUTITEM
-      },
+        component: INOUTITEM,
+        meta: { requiresAuth: true }
+      }
     ]
   },
   {
     path: '/:pathMatch(.*)',
     name: 'notfound',
     component: Page404
-  },
-
+  }
 ];
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
 });
+// CODINGAN DIBAWAH DIMATIKAN KARENA JAVASCRIPT UNTUK SIDEBAR DAN  DROPDOWN NYA TIDAK WORK
+// MAKA ALTERNATIF LAIN MENGGUNAKN BEFORE MOUNT DI ADMIN DEFAULT LAYOUT
+
+// const apiUrl = process.env.VUE_APP_API_URL;
+
+// const checkuser = async () => {
+//   try {
+//     const iduser = localStorage.getItem('id');
+//     const token = localStorage.getItem('token');
+//     if (!iduser || !token) {
+//       return false;
+//     }
+//     const data = await axios.get(`${apiUrl}/api/users/checklogin/${iduser}/${token}`);
+//     let getdata = data.data.data.is_login;
+//     return getdata;
+//   } catch (error) {
+//     return false;
+//   }
+// };
+
+// router.beforeResolve((to, from, next) => {
+//   checkuser().then((isAuthenticated) => {
+//     setInterval(function () {
+//       const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+//       // const isAuthenticated = true;
+//       if (requiresAuth && !isAuthenticated) {
+//          next('/login');
+//       } else if (to.name === 'login' && isAuthenticated) {
+//         // Redirect away from the login page if already authenticated
+//         next('/');
+//       } else {
+//         // Continue with the navigation
+//         next();
+//       }
+//     }, 1000);
+//   });
+// });
+
+// const checkuserlogin = async () => {
+//   try {
+//     const baseurlapi = inject('baseurlapi');
+//     const iduser = localStorage.getItem('id');
+//     const token = localStorage.getItem('token');
+//     const BASE_URL = 'http://127.0.0.1:8000/';
+
+//     if (!iduser || !token) {
+//       return false;
+//     }
+
+//     const url = `${baseurlapi}users/checklogin/${iduser}/${token}`;
+//     const response = await axios.get(url);
+//     console.log(response);
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// };
+
+// router.beforeEach(async (to, from, next) => {
+//   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+//   const isAuthenticated = await checkuser();
+//   if (requiresAuth && !isAuthenticated) {
+//     window.location.href = '/login';
+//   } else if (to.name === 'login' && isAuthenticated) {
+//     // Redirect away from the login page if already authenticated
+//     window.location.href = '/';
+
+//     // next('/');
+//   } else {
+//     // Continue with the navigation
+//     next();
+//   }
+// });
 
 export default router;
