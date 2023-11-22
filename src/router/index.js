@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import axios from 'axios';
+// import axios from 'axios';
 
 import AdminLayout from '@/views/admin/layouts/AdminLayout.vue';
 import DashboardView from '@/views/admin/DashboardView';
@@ -29,7 +29,10 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: Login
+    component: Login,
+    meta: {
+      title: 'WELCOME TO MYPOSVUE'
+    }
   },
   {
     path: '/admin',
@@ -43,86 +46,129 @@ const routes = [
         path: '',
         name: 'admin',
         component: DashboardView,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'ADMIN DASHBOARD'
+        }
       },
       {
         path: 'mastercategory',
         name: 'mastercategory',
         component: MasterCategory,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'MASTER CATEGORY'
+        }
       },
       {
         path: 'masterproduct',
         name: 'masterproduct',
         component: MasterProduct,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'MASTER PRODUCT/ITEM'
+        }
       },
       {
         path: 'masteruser',
         name: 'masteruser',
         component: MasterUser,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'MASTER USER'
+        }
       },
       {
         path: 'roleuser',
         name: 'roleuser',
         component: RoleUser,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'ROLE USER'
+        }
       },
       {
         path: 'mastersupplier',
         name: 'mastersupplier',
         component: MasterSupplier,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'MASTER SUPPLIER'
+        }
       },
       {
         path: 'purchase',
         name: 'purchase',
         component: Purchase,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'PURCHASE TRANSACTION'
+        }
       },
       {
         path: 'purchasereturn',
         name: 'purchasereturn',
         component: PurchaseReturn,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'PURCHASE RETURN TRANSACTION'
+        }
       },
       {
         path: 'mastercustomer',
         name: 'mastercustomer',
         component: MasterCustomer,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'MASTER CUSTOMER'
+        }
       },
       {
         path: 'sales',
         name: 'sales',
         component: Sales,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'SALES TRANSACTION'
+        }
       },
       {
         path: 'salesreturn',
         name: 'salesreturn',
         component: SalesReturn,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'SALES RETURN TRANSACTION'
+        }
       },
       {
         path: 'grn',
         name: 'grn',
         component: GRN,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'GOODS RECEIVES NOTE'
+        }
       },
       {
         path: 'inoutitem',
         name: 'inoutitem',
         component: INOUTITEM,
-        meta: { requiresAuth: true }
+        meta: {
+          requiresAuth: true,
+          title: 'IN OUT ITEM TRANSACTION'
+        }
       }
     ]
   },
   {
     path: '/:pathMatch(.*)',
     name: 'notfound',
-    component: Page404
+    component: Page404,
+    meta: {
+      requiresAuth: true,
+      title: '404 NOT FOUND'
+    }
   }
 ];
 
@@ -130,6 +176,13 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
 });
+
+// Membuat Judul Halaman
+router.beforeEach((to, from, next) => {
+  document.title = to.meta.title;
+  next();
+});
+
 // CODINGAN DIBAWAH DIMATIKAN KARENA JAVASCRIPT UNTUK SIDEBAR DAN  DROPDOWN NYA TIDAK WORK
 // MAKA ALTERNATIF LAIN MENGGUNAKN BEFORE MOUNT DI ADMIN DEFAULT LAYOUT
 

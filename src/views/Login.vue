@@ -38,35 +38,43 @@ const postUSER = async () => {
     window.location.href = '/admin';
   } catch (error) {
     isFetchingdata.value = false;
-    // console.log(error.response);
-    if (error.response.status == 400) {
-      const dataerrors = error.response.data.errors;
-      if (dataerrors.hasOwnProperty('username')) {
-        invalidSubmit.value.username = true;
-        invalidSubmit.value.general = false;
-        invalidSubmit.value.servererror = false;
-      } else {
-        invalidSubmit.value.username = false;
-      }
-      if (dataerrors.hasOwnProperty('password')) {
-        invalidSubmit.value.password = true;
-        invalidSubmit.value.general = false;
-        invalidSubmit.value.servererror = false;
-      } else {
-        invalidSubmit.value.password = false;
-      }
-    } else if (error.response.status == 401) {
-      invalidSubmit.value.general = true;
-      invalidSubmit.value.username = false;
-      invalidSubmit.value.password = false;
-      invalidSubmit.value.servererror = false;
-      postDATA.password = '';
-      usernameform.value.focus();
-    } else {
+
+    if (error.message == 'Network Error') {
       invalidSubmit.value.servererror = true;
       invalidSubmit.value.general = false;
       invalidSubmit.value.username = false;
       invalidSubmit.value.password = false;
+    } else {
+      const status = error.response.status;
+      if (status == 400) {
+        const dataerrors = error.response.data.errors;
+        if (dataerrors.hasOwnProperty('username')) {
+          invalidSubmit.value.username = true;
+          invalidSubmit.value.general = false;
+          invalidSubmit.value.servererror = false;
+        } else {
+          invalidSubmit.value.username = false;
+        }
+        if (dataerrors.hasOwnProperty('password')) {
+          invalidSubmit.value.password = true;
+          invalidSubmit.value.general = false;
+          invalidSubmit.value.servererror = false;
+        } else {
+          invalidSubmit.value.password = false;
+        }
+      } else if (status == 401) {
+        invalidSubmit.value.general = true;
+        invalidSubmit.value.username = false;
+        invalidSubmit.value.password = false;
+        invalidSubmit.value.servererror = false;
+        postDATA.password = '';
+        usernameform.value.focus();
+      } else {
+        invalidSubmit.value.servererror = true;
+        invalidSubmit.value.general = false;
+        invalidSubmit.value.username = false;
+        invalidSubmit.value.password = false;
+      }
     }
   }
 };
