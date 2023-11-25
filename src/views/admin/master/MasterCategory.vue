@@ -1,10 +1,8 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeMount } from 'vue';
+import { iziInfo, iziError, iziSuccess, iziWarning } from '@/izitoast.js';
 import axios from 'axios';
 import Spinner from '@/components/Spinner.vue';
-import jquery from 'jquery';
-
-const $ = jquery;
 
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
@@ -29,7 +27,11 @@ const postData = reactive({
   name: '',
   status: 1
 });
-
+const clearData = () => {
+  invalidSubmit.value.name = false;
+  invalidSubmit.value.servererror = false;
+  postData.name = '';
+};
 const getApiData = async () => {
   isFetchingdata.value = true;
   try {
@@ -68,9 +70,10 @@ const postApiData = async () => {
       }
     });
     isPostingData.value = false;
-    swal('ok');
-    console.log(postdatacategory);
-    // getApiData();
+    iziSuccess('Success', 'Successfully Saved New Category Product');
+    clearData();
+    getApiData();
+    $('#modalCategory').modal('hide');
   } catch (error) {
     isPostingData.value = false;
     if (error.message == 'Network Error') {
@@ -208,7 +211,7 @@ onMounted(async () => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ titleModal }}</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <button type="button" @click="clearData()" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
@@ -220,7 +223,7 @@ onMounted(async () => {
             </div>
           </div>
           <div class="modal-footer bg-whitesmoke br">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" @click="clearData()" class="btn btn-secondary" data-dismiss="modal">Close</button>
             <button type="button" @click="postApiData()" class="btn btn-primary">
               <div v-if="isPostingData">Processing...</div>
               <span v-else> Add New </span>
