@@ -17,6 +17,7 @@ import GRN from '@/views/admin/inventory/GRN.vue';
 import INOUTITEM from '@/views/admin/inventory/INOUTITEM.vue';
 import Page404 from '@/views/Page404.vue';
 import Login from '@/views/Login.vue';
+// import CobaTable from '@/views/CobaTable.vue';
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
       name: 'login'
     }
   },
+  // {
+  //   path: '/cobatable',
+  //   name: 'cobatable',
+  //   component : CobaTable
+  // },
   {
     path: '/login',
     name: 'login',
