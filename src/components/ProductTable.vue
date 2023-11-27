@@ -1,17 +1,18 @@
 <script setup>
 import { ref, onMounted, reactive, defineExpose, defineEmits } from 'vue';
 import { iziInfo, iziError, iziSuccess, iziWarning } from '@/izitoast.js';
+import { useRoute, useRouter } from 'vue-router';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
+import { formatter } from '@/rupiahformatter.js';
+import enc from '@/myencription.js';
 import axios from 'axios';
 onMounted(() => {
   getApiProduct();
 });
-const formatter = new Intl.NumberFormat('id-ID', {
-  style: 'currency',
-  currency: 'IDR'
-});
+const router = useRouter();
+const route = useRoute();
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
@@ -133,6 +134,12 @@ const changeServer = (data) => {
 };
 const viewDelete = (data) => {
   showconfirmdelete(data, deleteProduct, 'Product');
+};
+const viewEdit = (data) => {
+  router.push({
+    name: 'masterproductedit'
+  });
+  sessionStorage.setItem('paramsid', enc.encrypt(data.id));
 };
 </script>
 <template>

@@ -72,12 +72,21 @@ const routes = [
         }
       },
       {
-        path: 'masterproduct/:id',
-        name: 'masterproductmanage',
+        path: 'masterproduct/create',
+        name: 'masterproductcreate',
         component: MasterProductManage,
         meta: {
           requiresAuth: true,
           title: 'ADD MASTER PRODUCT/ITEM'
+        }
+      },
+      {
+        path: 'masterproduct/edit',
+        name: 'masterproductedit',
+        component: MasterProductManage,
+        meta: {
+          requiresAuth: true,
+          title: 'EDIT MASTER PRODUCT/ITEM'
         }
       },
       {

@@ -1,8 +1,12 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onBeforeMount } from 'vue';
 import { iziError, iziSuccess } from '@/izitoast.js';
 import axios from 'axios';
 import ProductTable from '@/components/ProductTable.vue';
+
+onBeforeMount(() => {
+  sessionStorage.clear();
+});
 </script>
 <template>
   <!-- Main Content -->

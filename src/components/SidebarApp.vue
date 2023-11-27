@@ -9,6 +9,8 @@ const route = useRoute();
 const isadmin = ref(false);
 const ismastercategory = ref(false);
 const ismasterproduct = ref(false);
+const ismasterproductedit = ref(false);
+const ismasterproductcreate = ref(false);
 const ismasteruser = ref(false);
 const isroleuser = ref(false);
 const ismastersupplier = ref(false);
@@ -40,7 +42,17 @@ const isActive = async () => {
   } else {
     ismasterproduct.value = false;
   }
-  if (route.name != 'masterproduct' && route.name != 'mastercategory') {
+  if (route.name == 'masterproductcreate') {
+    ismasterproductcreate.value = true;
+  } else {
+    ismasterproductcreate.value = false;
+  }
+  if (route.name == 'masterproductedit') {
+    ismasterproductedit.value = true;
+  } else {
+    ismasterproductedit.value = false;
+  }
+  if (route.name != 'masterproduct' && route.name != 'mastercategory' && route.name != 'masterproductcreate' && route.name != 'masterproductedit') {
     $('.dropdownproductmanagement').stop(true, true).slideUp();
   }
   // MASTER MENU - USER MANAGEMENT
@@ -145,11 +157,13 @@ onMounted(() => {
           <router-link class="nav-link" :to="{ name: 'admin' }"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></router-link>
         </li>
         <li class="menu-header">Master</li>
-        <li class="nav-item dropdown" :class="{ active: ismastercategory | ismasterproduct }">
+        <li class="nav-item dropdown" :class="{ active: ismastercategory || ismasterproduct || ismasterproductcreate || ismasterproductedit }">
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-cubes"></i> <span>Product Management</span></a>
           <ul class="dropdown-menu dropdownproductmanagement">
             <li :class="{ active: ismastercategory }"><router-link class="nav-link" :to="{ name: 'mastercategory' }">Master Category</router-link></li>
-            <li :class="{ active: ismasterproduct }"><router-link class="nav-link" :to="{ name: 'masterproduct' }">Master Item/Product</router-link></li>
+            <li :class="{ active: ismasterproduct || ismasterproductcreate || ismasterproductedit }">
+              <router-link class="nav-link" :to="{ name: 'masterproduct' }">Master Item/Product</router-link>
+            </li>
             <!-- <li><a class="nav-link" href="layout-top-navigation.html">Top Navigation</a></li> -->
           </ul>
         </li>
