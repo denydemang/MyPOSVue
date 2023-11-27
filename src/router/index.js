@@ -5,6 +5,7 @@ import AdminLayout from '@/views/admin/layouts/AdminLayout.vue';
 import DashboardView from '@/views/admin/DashboardView';
 import MasterCategory from '@/views/admin/master/MasterCategory.vue';
 import MasterProduct from '@/views/admin/master/MasterProduct.vue';
+import MasterProductManage from '@/views/admin/master/MasterProductManage.vue';
 import MasterUser from '@/views/admin/master/MasterUser.vue';
 import RoleUser from '@/views/admin/master/RoleUser.vue';
 import MasterSupplier from '@/views/admin/transaction/purchase/MasterSupplier.vue';
@@ -27,11 +28,6 @@ const routes = [
       name: 'login'
     }
   },
-  // {
-  //   path: '/cobatable',
-  //   name: 'cobatable',
-  //   component : CobaTable
-  // },
   {
     path: '/login',
     name: 'login',
@@ -73,6 +69,15 @@ const routes = [
         meta: {
           requiresAuth: true,
           title: 'MASTER PRODUCT/ITEM'
+        }
+      },
+      {
+        path: 'masterproduct/:id',
+        name: 'masterproductmanage',
+        component: MasterProductManage,
+        meta: {
+          requiresAuth: true,
+          title: 'ADD MASTER PRODUCT/ITEM'
         }
       },
       {
