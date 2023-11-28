@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
-import { formatter } from '@/rupiahformatter.js';
+import { formatRupiah } from '@/rupiahformatter.js';
 import enc from '@/myencription.js';
 import axios from 'axios';
 onMounted(() => {
@@ -53,7 +53,7 @@ const getApiProduct = async () => {
     );
     let dataProduct = responseData.data.data;
     dataProduct.map((item) => {
-      return (item.price = formatter.format(item.price));
+      return (item.price = formatRupiah(item.price));
     });
     let totalAllRows = responseData.data.meta.total;
     total_rows.value = totalAllRows;
@@ -79,7 +79,7 @@ const filterProduct = async () => {
     let dataProduct = responseData.data.data;
     let totalAllRows = responseData.data.meta.total;
     dataProduct.map((item) => {
-      return (item.price = formatter.format(item.price));
+      return (item.price = formatRupiah(item.price));
     });
     total_rows.value = totalAllRows;
     rows.value = dataProduct;

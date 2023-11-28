@@ -1,12 +1,17 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from 'vue';
+import { useRouter } from 'vue-router';
 import { iziError, iziSuccess } from '@/izitoast.js';
 import axios from 'axios';
 import ProductTable from '@/components/ProductTable.vue';
 
-onBeforeMount(() => {
-  sessionStorage.clear();
-});
+const router = useRouter();
+
+const addNewView = () => {
+  router.push({
+    name: 'masterproductcreate'
+  });
+};
 </script>
 <template>
   <!-- Main Content -->
@@ -18,9 +23,7 @@ onBeforeMount(() => {
       </div>
       <div class="row">
         <div class="col-lg-12" style="min-height: 100vh">
-          <button class="btn btn-primary mt-2 mb-3" @click="addNewView('Add New Category')" data-toggle="modal" data-target="#modalCategory">
-            <i class="fas fa-plus"></i> Add New
-          </button>
+          <button class="btn btn-primary mt-2 mb-3" @click="addNewView('Add New Category')"><i class="fas fa-plus"></i> Add New</button>
           <ProductTable />
         </div>
       </div>
