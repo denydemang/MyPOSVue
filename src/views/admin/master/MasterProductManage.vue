@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import myenc from '@/myencription.js';
 import axios from 'axios';
 import { formatRupiah } from '@/rupiahformatter';
+import { showerror } from '@/jqueryconfirm';
 const router = useRouter();
 const route = useRoute();
 const isfetchingdata = ref(false);
@@ -17,6 +18,7 @@ const token = localStorage.getItem('token');
 const inputPrice = ref(0);
 const inputname = ref(null);
 const inputbarcode = ref(null);
+const ispostingdata = ref(false);
 let paramsid = sessionStorage.getItem('paramsid');
 const listcategory = ref([]);
 const listunit = ref([]);
@@ -42,7 +44,8 @@ const postData = reactive({
   minstock: 0,
   initialstock: 0,
   id_unit: null,
-  buyprice: formatRupiah(0)
+  buyprice: formatRupiah(0),
+  status: true
 });
 onUnmounted(() => {
   sessionStorage.removeItem('paramsid');
@@ -94,7 +97,6 @@ const checksession = async () => {
         });
 
         const productData = responseDataProduct.data.data;
-        console.log(productData);
         postData.barcode = productData.barcode;
         postData.name = productData.name;
         postData.brands = productData.brands;
@@ -117,17 +119,26 @@ const checksession = async () => {
 
 const postApiData = async () => {
   try {
+    ispostingdata.value = true;
     postData.price = postData.price.replace(/\D/g, '');
     const responseDataProduct = await axios.post(`${apiurl}/api/products`, postData, {
       headers: {
         Authorization: token
       }
     });
+    let getbarcode = responseDataProduct.data.data.barcode;
+    sessionStorage.setItem('success', `Successfully Created New Product (${getbarcode})`);
+    router.push({
+      name: 'masterproduct'
+    });
   } catch (error) {
-    postData.price = formatRupiah(0);
+    ispostingdata.value = false;
+    postData.price = formatRupiah(postData.price);
     if (error.message == 'Network Error') {
+      showerror('ERROR ! The Server Connection Cannot Be Reached');
     } else {
       if (error.response.status == 500) {
+        showerror('Error ! Got Problem With Internal Server');
       } else if (error.response.status == 400) {
         if (error.response.data.errors.hasOwnProperty('barcode')) {
           validation.value.barcode = error.response.data.errors.barcode[0];
@@ -170,6 +181,76 @@ const postApiData = async () => {
           validation.value.id_unit = '';
         }
       } else {
+        showerror('Error ! Got Problem With Internal Server');
+      }
+    }
+  }
+};
+const putApiData = async () => {
+  try {
+    ispostingdata.value = true;
+    postData.price = postData.price.replace(/\D/g, '');
+    const responseDataProduct = await axios.put(`${apiurl}/api/products/${branch}/${paramsid}`, postData, {
+      headers: {
+        Authorization: token
+      }
+    });
+    let getbarcode = responseDataProduct.data.data.barcode;
+    sessionStorage.setItem('success', `Successfully Updated Product (${getbarcode})`);
+    router.push({
+      name: 'masterproduct'
+    });
+  } catch (error) {
+    ispostingdata.value = false;
+    postData.price = formatRupiah(postData.price);
+    if (error.message == 'Network Error') {
+      showerror('ERROR ! The Server Connection Cannot Be Reached');
+    } else {
+      if (error.response.status == 500) {
+        showerror('Error ! Got Problem With Internal Server');
+      } else if (error.response.status == 400) {
+        if (error.response.data.errors.hasOwnProperty('barcode')) {
+          validation.value.barcode = error.response.data.errors.barcode[0];
+        } else {
+          validation.value.barcode = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('name')) {
+          validation.value.name = error.response.data.errors.name[0];
+        } else {
+          validation.value.name = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('brands')) {
+          validation.value.brands = error.response.data.errors.brands[0];
+        } else {
+          validation.value.brands = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('price')) {
+          validation.value.price = error.response.data.errors.price[0];
+        } else {
+          validation.value.price = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('maxstock')) {
+          validation.value.maxstock = error.response.data.errors.maxstock[0];
+        } else {
+          validation.value.maxstock = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('minstock')) {
+          validation.value.minstock = error.response.data.errors.minstock[0];
+        } else {
+          validation.value.minstock = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('id_category')) {
+          validation.value.id_category = error.response.data.errors.id_category[0];
+        } else {
+          validation.value.id_category = '';
+        }
+        if (error.response.data.errors.hasOwnProperty('id_unit')) {
+          validation.value.id_unit = error.response.data.errors.id_unit[0];
+        } else {
+          validation.value.id_unit = '';
+        }
+      } else {
+        showerror('Error ! Got Problem With Internal Server');
       }
     }
   }
@@ -179,11 +260,6 @@ const backtomaster = () => {
     name: 'masterproduct'
   });
 };
-// $(document).ready(function () {
-//   $('.inputprice').keyup(function (e) {
-//     console.log('ok');
-//   });
-// });
 const ceklistinitialstock = (e) => {
   e.target.checked ? (isdisabledinitialstock.value = false) : (isdisabledinitialstock.value = true);
 };
@@ -245,18 +321,6 @@ const filterinput = () => {
                         <div class="invalid-feedback">{{ validation.barcode }}</div>
                       </div>
                     </div>
-                    <!-- <div class="form-group">
-                      <label>Barcode</label>
-                      <input
-                        ref="inputbarcode"
-                        :disabled="isdisabledbarcode"
-                        style="font-size: 18px; font-weight: bold"
-                        v-model="postData.barcode"
-                        type="text"
-                        class="form-control"
-                        @keyup.enter="inputname.focus()"
-                      />
-                    </div> -->
                   </div>
                   <div class="col-lg-4 col-12">
                     <div class="form-group">
@@ -359,8 +423,12 @@ const filterinput = () => {
                   </div>
                   <div class="col-12 d-flex justify-content-end">
                     <button class="btn btn-danger btn-lg mr-2" @click="backtomaster()">Cancel</button>
-                    <button v-if="route.name == 'masterproductcreate'" @click="postApiData" class="btn btn-primary btn-lg">Save</button>
-                    <button v-if="route.name == 'masterproductedit'" class="btn btn-primary btn-lg">Edit</button>
+                    <button v-if="route.name == 'masterproductcreate'" :disabled="ispostingdata" @click="postApiData" class="btn btn-primary btn-lg">
+                      <span v-if="ispostingdata">Saving...</span><span v-else>Save</span>
+                    </button>
+                    <button v-if="route.name == 'masterproductedit'" :disabled="ispostingdata" @click="putApiData()" class="btn btn-primary btn-lg">
+                      <span v-if="ispostingdata">Editing...</span><span v-else>Edit</span>
+                    </button>
                   </div>
                 </div>
               </template>

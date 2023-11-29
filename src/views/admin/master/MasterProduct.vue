@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onBeforeMount } from 'vue';
+import { ref, reactive, onBeforeMount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { iziError, iziSuccess } from '@/izitoast.js';
 import axios from 'axios';
@@ -12,6 +12,12 @@ const addNewView = () => {
     name: 'masterproductcreate'
   });
 };
+onMounted(() => {
+  if (sessionStorage.getItem('success')) {
+    iziSuccess('success', sessionStorage.getItem('success'));
+    sessionStorage.removeItem('success');
+  }
+});
 </script>
 <template>
   <!-- Main Content -->
