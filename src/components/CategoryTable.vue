@@ -83,7 +83,11 @@ const getCategory = async () => {
     rows.value = dataCategory;
     console.log(dataCategory);
   } catch (error) {
-    console.log(error);
+    if (error.message == 'Network Error') {
+      showerror('ERROR ! The Server Connection Cannot Be Reached');
+    } else {
+      showerror('Error ! Got Problem With Internal Server');
+    }
   }
 
   loading.value = false;
@@ -133,10 +137,13 @@ const filterCategory = async () => {
     dataCategory.forEach((obj, key) => {
       obj.no = counter++;
     });
-    console.log(dataCategory);
     rows.value = dataCategory;
   } catch (error) {
-    console.log(error);
+    if (error.message == 'Network Error') {
+      showerror('ERROR ! The Server Connection Cannot Be Reached');
+    } else {
+      showerror('Error ! Got Problem With Internal Server');
+    }
   }
 
   loading.value = false;

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, reactive, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { dateNow } from '@/mytime';
 import myenc from '@/myencription.js';
 import axios from 'axios';
 import { formatRupiah } from '@/rupiahformatter';
@@ -16,12 +17,15 @@ const isdisabledbuyprice = ref(true);
 const isdisabledbarcode = ref(false);
 const token = localStorage.getItem('token');
 const inputPrice = ref(0);
+const inputBuyPrice = ref(0);
 const inputname = ref(null);
 const inputbarcode = ref(null);
 const ispostingdata = ref(false);
 let paramsid = sessionStorage.getItem('paramsid');
 const listcategory = ref([]);
 const listunit = ref([]);
+const ischeckedinitialstock = ref(false);
+const ischeckedbuyprice = ref(false);
 
 const validation = ref({
   barcode: '',
@@ -45,7 +49,9 @@ const postData = reactive({
   initialstock: 0,
   id_unit: null,
   buyprice: formatRupiah(0),
-  status: true
+  status: true,
+  id_product: null,
+  date: dateNow()
 });
 onUnmounted(() => {
   sessionStorage.removeItem('paramsid');
@@ -87,6 +93,7 @@ const checksession = async () => {
       return true;
     } else {
       namesession.value = 'Edit Product';
+
       if (paramsid) {
         paramsid = myenc.decrypt(paramsid);
 
@@ -95,8 +102,27 @@ const checksession = async () => {
             Authorization: token
           }
         });
+        const responseDataInitial = await axios.get(`${apiurl}/api/stocks/initial/${branch}/${paramsid}`, {
+          headers: {
+            Authorization: token
+          }
+        });
 
         const productData = responseDataProduct.data.data;
+        const initialstock = responseDataInitial.data.data;
+        if (initialstock) {
+          ischeckedinitialstock.value = true;
+          ischeckedbuyprice.value = true;
+          isdisabledbuyprice.value = false;
+          isdisabledinitialstock.value = false;
+          postData.buyprice = formatRupiah(initialstock.cogs);
+          postData.initialstock = initialstock.actual_stock;
+        } else {
+          ischeckedinitialstock.value = false;
+          ischeckedbuyprice.value = false;
+          isdisabledbuyprice.value = true;
+          isdisabledinitialstock.value = true;
+        }
         postData.barcode = productData.barcode;
         postData.name = productData.name;
         postData.brands = productData.brands;
@@ -121,11 +147,20 @@ const postApiData = async () => {
   try {
     ispostingdata.value = true;
     postData.price = postData.price.replace(/\D/g, '');
+    postData.buyprice = postData.buyprice.replace(/\D/g, '');
     const responseDataProduct = await axios.post(`${apiurl}/api/products`, postData, {
       headers: {
         Authorization: token
       }
     });
+    if (!isdisabledinitialstock.value && !isdisabledbuyprice.value && postData.buyprice != 0 && postData.initialstock != 0 && postData.initialstock != null) {
+      postData.id_product = responseDataProduct.data.data.id;
+      await axios.post(`${apiurl}/api/stocks/initial/create`, postData, {
+        headers: {
+          Authorization: token
+        }
+      });
+    }
     let getbarcode = responseDataProduct.data.data.barcode;
     sessionStorage.setItem('success', `Successfully Created New Product (${getbarcode})`);
     router.push({
@@ -134,6 +169,7 @@ const postApiData = async () => {
   } catch (error) {
     ispostingdata.value = false;
     postData.price = formatRupiah(postData.price);
+    postData.buyprice = formatRupiah(postData.buyprice);
     if (error.message == 'Network Error') {
       showerror('ERROR ! The Server Connection Cannot Be Reached');
     } else {
@@ -190,11 +226,19 @@ const putApiData = async () => {
   try {
     ispostingdata.value = true;
     postData.price = postData.price.replace(/\D/g, '');
+    postData.buyprice = postData.buyprice.replace(/\D/g, '');
     const responseDataProduct = await axios.put(`${apiurl}/api/products/${branch}/${paramsid}`, postData, {
       headers: {
         Authorization: token
       }
     });
+    if (!isdisabledinitialstock.value && !isdisabledbuyprice.value && postData.buyprice != 0 && postData.initialstock != 0 && postData.initialstock != null) {
+      await axios.put(`${apiurl}/api/stocks/initial/${branch}/${paramsid}`, postData, {
+        headers: {
+          Authorization: token
+        }
+      });
+    }
     let getbarcode = responseDataProduct.data.data.barcode;
     sessionStorage.setItem('success', `Successfully Updated Product (${getbarcode})`);
     router.push({
@@ -261,14 +305,30 @@ const backtomaster = () => {
   });
 };
 const ceklistinitialstock = (e) => {
-  e.target.checked ? (isdisabledinitialstock.value = false) : (isdisabledinitialstock.value = true);
+  if (e.target.checked) {
+    isdisabledinitialstock.value = false;
+  } else {
+    isdisabledinitialstock.value = true;
+    postData.initialstock = 0;
+  }
 };
 const ceklistbuyprice = (e) => {
-  e.target.checked ? (isdisabledbuyprice.value = false) : (isdisabledbuyprice.value = true);
+  if (e.target.checked) {
+    isdisabledbuyprice.value = false;
+  } else {
+    isdisabledbuyprice.value = true;
+    postData.buyprice = formatRupiah(0);
+  }
 };
-const filterinput = () => {
-  inputPrice.value = postData.price.replace(/\D/g, '');
-  postData.price = formatRupiah(inputPrice.value);
+const filterinput = (price = false, buyprice = false) => {
+  if (price) {
+    inputPrice.value = postData.price.replace(/\D/g, '');
+    postData.price = formatRupiah(inputPrice.value);
+  }
+  if (buyprice) {
+    inputBuyPrice.value = postData.buyprice.replace(/\D/g, '');
+    postData.buyprice = formatRupiah(inputBuyPrice.value);
+  }
 };
 </script>
 <template>
@@ -359,7 +419,7 @@ const filterinput = () => {
                       <label>Price</label>
                       <input
                         style="font-size: 18px; font-weight: bold"
-                        @keyup="filterinput()"
+                        @keyup="filterinput(true, false)"
                         v-model="postData.price"
                         type="text"
                         class="form-control inputprice"
@@ -409,16 +469,28 @@ const filterinput = () => {
                 <div class="row">
                   <div class="col-lg-4 col-12">
                     <div class="form-group">
-                      <label><input type="checkbox" @change="ceklistinitialstock" class="mr-2" />Initial Stock</label>
+                      <label
+                        ><input @change="ceklistinitialstock" :checked="ischeckedinitialstock" :disabled="namesession == 'Edit Product'" type="checkbox" class="mr-2" />Initial
+                        Stock</label
+                      >
                       <i class="text-warning text-sm ml-2 d-lg-inline d-block" style="font-size: smaller">Dont Fill In If Any Purchasing Transaction</i>
                       <input style="font-size: 18px; font-weight: bold" v-model="postData.initialstock" :readonly="isdisabledinitialstock" type="number" class="form-control" />
                     </div>
                   </div>
                   <div class="col-lg-4 col-12">
                     <div class="form-group">
-                      <label><input type="checkbox" @change="ceklistbuyprice" class="mr-2" />Buy Price</label>
+                      <label
+                        ><input type="checkbox" class="mr-2" :checked="ischeckedinitialstock" :disabled="namesession == 'Edit Product'" @change="ceklistbuyprice" />Buy Price</label
+                      >
                       <i class="text-warning ml-2 d-lg-inline d-block" style="font-size: smaller">Dont Fill In If Any Purchasing Transaction</i>
-                      <input style="font-size: 18px; font-weight: bold" v-model="postData.buyprice" :readonly="isdisabledbuyprice" type="text" class="form-control" />
+                      <input
+                        style="font-size: 18px; font-weight: bold"
+                        v-model="postData.buyprice"
+                        @keyup="filterinput(false, true)"
+                        :readonly="isdisabledbuyprice"
+                        type="text"
+                        class="form-control"
+                      />
                     </div>
                   </div>
                   <div class="col-12 d-flex justify-content-end">

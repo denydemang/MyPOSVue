@@ -80,7 +80,6 @@ const postUSER = async () => {
 };
 onBeforeMount(async () => {
   const isAuthenticated = await checkuser();
-  // console.log(isAuthenticated);
   if (isAuthenticated) {
     window.location.href = '/admin';
   } else {

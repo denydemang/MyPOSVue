@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, reactive, defineExpose, defineEmits } from 'vue';
-import { iziInfo, iziError, iziSuccess, iziWarning } from '@/izitoast.js';
+import { ref, onMounted, reactive } from 'vue';
+import { iziSuccess } from '@/izitoast.js';
 import { useRoute, useRouter } from 'vue-router';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
@@ -59,7 +59,11 @@ const getApiProduct = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataProduct;
   } catch (error) {
-    console.log(error);
+    if (error.message == 'Network Error') {
+      showerror('ERROR ! The Server Connection Cannot Be Reached');
+    } else {
+      showerror('Error ! Got Problem With Internal Server');
+    }
     total_rows.value = 0;
     rows.value = null;
   }
@@ -84,7 +88,11 @@ const filterProduct = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataProduct;
   } catch (error) {
-    console.log(error);
+    if (error.message == 'Network Error') {
+      showerror('ERROR ! The Server Connection Cannot Be Reached');
+    } else {
+      showerror('Error ! Got Problem With Internal Server');
+    }
     total_rows.value = 0;
     rows.value = null;
   }
@@ -92,7 +100,6 @@ const filterProduct = async () => {
   loading.value = false;
 };
 const deleteProduct = async (id, name) => {
-  console.log([id, name]);
   try {
     isdeleting.value = true;
     await axios.delete(`${apiurl}/api/products/${branch}/${id}`, {

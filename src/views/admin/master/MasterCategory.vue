@@ -77,7 +77,6 @@ const putApiData = async () => {
     if (error.message == 'Network Error') {
       iziError('Error', 'INTERNAL SERVER ERROR');
     } else {
-      // console.log(error.response.stat);
       const status = error.response.status;
       if (status == 400) {
         invalidSubmit.value.name = true;
@@ -101,7 +100,6 @@ const addNewView = (title) => {
 const populateModal = (data) => {
   titleModal.value = 'Edit category';
   isEdit.value = true;
-  console.log(data[0].id);
   postData.id = data[0].id;
   postData.name = data[0].name;
 };
