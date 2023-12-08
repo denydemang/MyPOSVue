@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onBeforeMount } from 'vue';
 import { iziError, iziSuccess } from '@/izitoast.js';
 import axios from 'axios';
 import UserTable from '@/components/UserTable.vue';
@@ -9,21 +9,28 @@ const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
 const titleModal = ref('');
+const roleData = ref([]);
 const isPostingData = ref(false);
 const invalidSubmit = ref({
   branchcode: '',
   username: '',
   name: '',
   password: '',
+  konfirmpw: '',
   id_role: '',
   servererror: ''
 });
+onBeforeMount(() => {
+  getApiRole();
+});
 const postData = reactive({
-  branchcode: '',
+  branchcode: branch,
   username: '',
   name: '',
   password: '',
-  id_role: null
+  konfirmpw: '',
+  id_role: null,
+  id: ''
 });
 const clearData = () => {
   invalidSubmit.value.branchcode = '';
@@ -31,73 +38,134 @@ const clearData = () => {
   invalidSubmit.value.password = '';
   invalidSubmit.value.id_role = '';
   invalidSubmit.value.servererror = '';
+  invalidSubmit.value.konfirmpw = '';
 
-  postData.branchcode = '';
   postData.username = '';
   postData.name = '';
-  postData.password = '';
+  postData.password = null;
   postData.id_role = '';
+  postData.konfirmpw = '';
+  postData.id = '';
 };
 
-const postApiData = async () => {
-  isPostingData.value = true;
+const getApiRole = async () => {
   try {
-    await axios.post(`${apiurl}/api/categories`, postData, {
+    const response = await axios.get(`${apiurl}/api/roles/${branch}`, {
       headers: {
         Authorization: token
       }
     });
-    isPostingData.value = false;
-    iziSuccess('Success', 'Successfully Added New Category Product');
-    clearData();
-    //panggil method getCategory di component CategoryTable
-    MyChild.value.getCategory();
-    //Sembunyikan modal
-    $('#modalCategory').modal('hide');
+    roleData.value = response.data.data;
   } catch (error) {
+    iziError('Error', error.message);
+  }
+};
+const postApiData = async () => {
+  isPostingData.value = true;
+  if (postData.password.toString() != postData.konfirmpw.toString()) {
+    invalidSubmit.value.konfirmpw = 'Confirm Password Not Same';
+    invalidSubmit.value.branchcode = '';
+    invalidSubmit.value.name = '';
+    invalidSubmit.value.password = '';
+    invalidSubmit.value.username = '';
+    invalidSubmit.value.id_role = '';
     isPostingData.value = false;
-    if (error.message == 'Network Error') {
-      iziError('Error', 'INTERNAL SERVER ERROR');
-    } else {
-      const status = error.response.status;
-      if (status == 400) {
-        invalidSubmit.value.name = true;
-        invalidSubmit.value.namemessage = error.response.data.errors.name[0];
+  } else {
+    invalidSubmit.value.konfirmpw = '';
+    try {
+      const response = await axios.post(`${apiurl}/api/users`, postData, {
+        headers: {
+          Authorization: token
+        }
+      });
+      isPostingData.value = false;
+      iziSuccess('Success', 'Successfully Added New Users ' + postData.username);
+      clearData();
+      // panggil method getCategory di component CategoryTable
+      MyChild.value.getUsers();
+      // Sembunyikan modal
+      $('#modalUser').modal('hide');
+    } catch (error) {
+      isPostingData.value = false;
+      if (error.message == 'Network Error') {
+        iziError('Error', 'INTERNAL SERVER ERROR');
+      } else {
+        if (error.message == 'Network Error') {
+          showerror('ERROR ! The Server Connection Cannot Be Reached');
+        } else {
+          if (error.response.status == 500) {
+            showerror('Error ! Got Problem With Internal Server');
+          } else if (error.response.status == 400) {
+            if (error.response.data.errors.hasOwnProperty('name')) {
+              invalidSubmit.value.name = error.response.data.errors.name[0];
+            } else {
+              invalidSubmit.value.name = '';
+            }
+            if (error.response.data.errors.hasOwnProperty('username')) {
+              invalidSubmit.value.username = error.response.data.errors.username[0];
+            } else {
+              invalidSubmit.value.username = '';
+            }
+            if (error.response.data.errors.hasOwnProperty('password')) {
+              invalidSubmit.value.password = error.response.data.errors.password[0];
+            } else {
+              invalidSubmit.value.password = '';
+            }
+            if (error.response.data.errors.hasOwnProperty('id_role')) {
+              invalidSubmit.value.id_role = error.response.data.errors.id_role[0];
+            } else {
+              invalidSubmit.value.id_role = '';
+            }
+          } else {
+            showerror('Error ! Got Problem With Internal Server');
+          }
+        }
       }
     }
   }
 };
 const putApiData = async () => {
   isPostingData.value = true;
+  postData.password = null;
   try {
-    const putdatacategory = await axios.put(`${apiurl}/api/categories/${postData.id}`, postData, {
+    const putdatacategory = await axios.put(`${apiurl}/api/users/${postData.id}`, postData, {
       headers: {
         Authorization: token
       }
     });
     isPostingData.value = false;
-    iziSuccess('Success', 'Successfully Edited Category Product');
+    iziSuccess('Success', 'Successfully Edited Users ' + postData.username);
     clearData();
-    //panggil method get user di component CategoryTable
-    MyChild.value.getCategory();
-    //Sembunyikan modal
-    $('#modalCategory').modal('hide');
+    MyChild.value.getUsers();
+    // Sembunyikan modal
+    $('#modalUser').modal('hide');
   } catch (error) {
     isPostingData.value = false;
     if (error.message == 'Network Error') {
       iziError('Error', 'INTERNAL SERVER ERROR');
     } else {
-      const status = error.response.status;
-      if (status == 400) {
-        invalidSubmit.value.name = true;
-        invalidSubmit.value.namemessage = error.response.data.errors.name[0];
-      }
-      if (status == 500) {
-        if (error.response.data.errors.general[0].includes('SQLSTATE[23000]')) {
-          invalidSubmit.value.name = true;
-          invalidSubmit.value.namemessage = 'Name Already Exists';
+      if (error.message == 'Network Error') {
+        iziError('Error', 'INTERNAL SERVER ERROR');
+      } else {
+        if (error.message == 'Network Error') {
+          showerror('ERROR ! The Server Connection Cannot Be Reached');
         } else {
-          iziError('Error', 'INTERNAL SERVER ERROR');
+          if (error.response.status == 500) {
+            showerror('Error ! Got Problem With Internal Server');
+          } else if (error.response.status == 400) {
+            if (error.response.data.errors.hasOwnProperty('name')) {
+              invalidSubmit.value.name = error.response.data.errors.name[0];
+            } else {
+              invalidSubmit.value.name = '';
+            }
+            if (error.response.data.errors.hasOwnProperty('id_role')) {
+              invalidSubmit.value.id_role = error.response.data.errors.id_role[0];
+            } else {
+              invalidSubmit.value.id_role = '';
+            }
+          } else {
+            showerror('Error ! Got Problem With Internal Server');
+          }
         }
       }
     }
@@ -110,8 +178,12 @@ const addNewView = (title) => {
 const populateModal = (data) => {
   titleModal.value = 'Edit category';
   isEdit.value = true;
-  postData.id = data[0].id;
-  postData.name = data[0].name;
+  postData.name = data.name;
+  postData.username = data.username;
+  postData.id = data.id;
+  postData.id_role = data.id_role;
+  // postData.id = data[0].id;
+  // postData.name = data[0].name;
 };
 </script>
 <template>
@@ -125,14 +197,14 @@ const populateModal = (data) => {
       <div class="row">
         <div class="col-lg-6">
           <button class="btn btn-primary mt-2 mb-3" @click="addNewView('Add New User')" data-toggle="modal" data-target="#modalUser"><i class="fas fa-plus"></i> Add New</button>
-          <UserTable ref="MyChild" @dataUser="populateModal" />
+          <UserTable ref="MyChild" @dataUsers="populateModal" />
         </div>
       </div>
     </section>
   </div>
   <!-- Modal Form -->
   <div class="modal fade" tabindex="-1" role="dialog" id="modalUser">
-    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">{{ titleModal }}</h5>
@@ -142,17 +214,42 @@ const populateModal = (data) => {
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Category Name</label>
+            <label class="form-label">Username</label>
+            <input type="text" :readonly="isEdit" :class="{ 'is-invalid': invalidSubmit.username }" v-model="postData.username" class="form-control" />
+            <div class="invalid-feedback">{{ invalidSubmit.username }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" :class="{ 'is-invalid': invalidSubmit.name }" v-model="postData.name" class="form-control" />
+            <div class="invalid-feedback">{{ invalidSubmit.name }}</div>
+          </div>
+          <div v-if="!isEdit" class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" :class="{ 'is-invalid': invalidSubmit.password }" v-model="postData.password" class="form-control" />
+            <div class="invalid-feedback">{{ invalidSubmit.password }}</div>
+          </div>
+          <div v-if="!isEdit" class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" :hidden="isEdit" :class="{ 'is-invalid': invalidSubmit.konfirmpw }" v-model="postData.konfirmpw" class="form-control" />
+            <div class="invalid-feedback">{{ invalidSubmit.konfirmpw }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Roles</label>
+            <select v-model="postData.id_role" :class="{ 'is-invalid': invalidSubmit.id_role }" style="font-size: 15px; font-weight: bold" class="form-control">
+              <option v-for="role in roleData" :key="role.id" :value="role.id">{{ role.name }}</option>
+            </select>
+            <div class="invalid-feedback">{{ invalidSubmit.id_role }}</div>
+            <!-- <div class="invalid-feedback">{{ validation.id_unit }}</div> -->
           </div>
         </div>
         <div class="modal-footer bg-whitesmoke br">
           <button type="button" @click="clearData()" class="btn btn-secondary" data-dismiss="modal">Close</button>
           <button v-if="!isEdit" type="button" @click="postApiData()" class="btn btn-primary">
-            <div v-if="isPostingData">Processing...</div>
+            <div disabled v-if="isPostingData">Processing...</div>
             <span v-else> Add New </span>
           </button>
           <button v-else type="button" @click="putApiData()" class="btn btn-primary">
-            <div v-if="isPostingData">Processing...</div>
+            <div disabled v-if="isPostingData">Processing...</div>
             <span v-else> Edit </span>
           </button>
         </div>

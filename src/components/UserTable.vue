@@ -9,15 +9,15 @@
       </div>
       <div class="d-flex">
         <div class="form-check mr-2">
-          <input class="form-check-input" @change="getUsers" v-model="selectedOption" type="radio" name="activeradio" id="all" value="all" checked />
+          <input class="form-check-input" @change="filterCategory" v-model="selectedOption" type="radio" name="activeradio" id="all" value="all" checked />
           <label class="form-check-label" for="all">All</label>
         </div>
         <div class="form-check mr-2">
-          <input class="form-check-input" @change="getUsers" v-model="selectedOption" type="radio" name="activeradio" id="active" value="active" />
+          <input class="form-check-input" @change="filterCategory" v-model="selectedOption" type="radio" name="activeradio" id="active" value="active" />
           <label class="form-check-label" for="active">Active</label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" @change="getUsers" v-model="selectedOption" type="radio" name="activeradio" id="unactive" value="unactive" />
+          <input class="form-check-input" @change="filterCategory" v-model="selectedOption" type="radio" name="activeradio" id="unactive" value="unactive" />
           <label class="form-check-label" for="unactive">Inactive</label>
         </div>
       </div>
@@ -39,9 +39,7 @@
       </template>
       <template #actions="data">
         <div>
-          <button type="button" data-toggle="modal" data-target="#modalCategory" class="btn btn-success btn-sm" @click="viewEdit(data.value)">
-            <i class="fas fa-edit"></i> Edit
-          </button>
+          <button type="button" data-toggle="modal" data-target="#modalUser" class="btn btn-success btn-sm" @click="viewEdit(data.value)"><i class="fas fa-edit"></i> Edit</button>
           <button type="button" class="btn btn-danger btn-sm" @click="viewDelete(data.value)"><i class="fas fa-trash"></i> Delete</button>
         </div>
       </template>
@@ -60,7 +58,7 @@ onMounted(() => {
   getUsers();
 });
 
-const emit = defineEmits(['dataUser']);
+const emit = defineEmits(['dataUsers']);
 const selectedOption = ref('all');
 
 const apiurl = process.env.VUE_APP_API_URL;
@@ -87,7 +85,6 @@ const cols =
 const getUsers = async () => {
   try {
     loading.value = true;
-    console.log(selectedOption.value);
     switch (selectedOption.value) {
       case 'all':
         var responseData = await axios.get(`${apiurl}/api/users?branchcode=${branch}&perpage=${params.pagesize}&page=${params.current_page}`, {
@@ -123,7 +120,6 @@ const getUsers = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataUsers;
   } catch (error) {
-    console.log(error);
     if (error.message == 'Network Error') {
       showerror('ERROR ! The Server Connection Cannot Be Reached');
     } else {
@@ -134,22 +130,23 @@ const getUsers = async () => {
   loading.value = false;
 };
 
-const deleteCategory = async (id, name) => {
+const deleteUser = async (id, name) => {
   try {
     isdeleting.value = true;
-    await axios.delete(`${apiurl}/api/categories/${id}`, {
+    await axios.delete(`${apiurl}/api/users/${id}`, {
       headers: {
         Authorization: token
       }
     });
     isdeleting.value = false;
     getUsers();
-    iziSuccess('Success', 'Successfully Deleted Category ' + name);
+    iziSuccess('Success', 'Successfully Deleted Users ' + name);
   } catch (error) {
     isdeleting.value = false;
+    console.log(error);
     if (error.message == 'Request failed with status code 500') {
       if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-        showerror('Category ' + name + ' Already Used In Transaction Cannot Be Deleted');
+        showerror('User ' + name + ' Already Used In Transaction Cannot Be Deleted');
       } else {
         showerror('ERROR!!! Internal Server Error');
       }
@@ -162,23 +159,48 @@ const deleteCategory = async (id, name) => {
 const filterCategory = async () => {
   try {
     loading.value = true;
-
-    const responseData = await axios.get(`${apiurl}/api/categories/${branch}/search?key=${params.search}&perpage=${params.pagesize}&page=${params.current_page}`, {
-      headers: {
-        Authorization: token
-      }
-    });
-    let dataCategory = responseData.data.data;
-    let totalAllRows = responseData.data.meta.total;
-    total_rows.value = totalAllRows;
-    // Inisialisasi nilai awal untuk counter
+    let convertsearch = '';
+    convertsearch = params.search.replace(/\s/g, '%');
+    switch (selectedOption.value) {
+      case 'all':
+        var responseData = await axios.get(`${apiurl}/api/users/search?branchcode=${branch}&perpage=${params.pagesize}&page=${params.current_page}&key=${convertsearch}`, {
+          headers: {
+            Authorization: token
+          }
+        });
+        break;
+      case 'active':
+        var responseData = await axios.get(
+          `${apiurl}/api/users/search?branchcode=${branch}&perpage=${params.pagesize}&page=${params.current_page}&isactive=1&key=${convertsearch}`,
+          {
+            headers: {
+              Authorization: token
+            }
+          }
+        );
+        break;
+      case 'unactive':
+        var responseData = await axios.get(
+          `${apiurl}/api/users/search?branchcode=${branch}&perpage=${params.pagesize}&page=${params.current_page}&isactive=0&key=${convertsearch}`,
+          {
+            headers: {
+              Authorization: token
+            }
+          }
+        );
+        break;
+    }
+    // Inisialisasi nilai awal untuk counter (nomor baris)
     let counter = params.current_page * params.pagesize - params.pagesize + 1;
 
     // Menambahkan properti 'no' dengan nilai increment pada setiap objek
-    dataCategory.forEach((obj, key) => {
+    let dataUsers = responseData.data.data.data;
+    dataUsers.forEach((obj, key) => {
       obj.no = counter++;
     });
-    rows.value = dataCategory;
+    let totalAllRows = responseData.data.data.total;
+    total_rows.value = totalAllRows;
+    rows.value = dataUsers;
   } catch (error) {
     if (error.message == 'Network Error') {
       showerror('ERROR ! The Server Connection Cannot Be Reached');
@@ -202,16 +224,16 @@ const changeServer = (data) => {
   }
 };
 const viewEdit = (data) => {
-  emit('dataCategory', [
-    {
-      id: data.id,
-      name: data.name
-    }
-  ]);
+  emit('dataUsers', {
+    id: data.id,
+    username: data.username,
+    id_role: data.id_role,
+    name: data.name
+  });
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteCategory, 'Category');
+  showconfirmdelete(data, deleteUser, 'User With Name');
 };
 //mengekspose function agar function getUsers bisa di jalankan di component parent
 defineExpose({
