@@ -6,6 +6,7 @@ import myenc from '@/myencription.js';
 import axios from 'axios';
 import { formatRupiah } from '@/rupiahformatter';
 import { showerror } from '@/jqueryconfirm';
+import ex from '@/exception.js';
 const router = useRouter();
 const route = useRoute();
 const isfetchingdata = ref(false);
@@ -69,6 +70,49 @@ onMounted(async () => {
     }
   }
 });
+
+const manageerror = (error) => {
+  if (error.response.data.errors.hasOwnProperty('barcode')) {
+    validation.value.barcode = error.response.data.errors.barcode[0];
+  } else {
+    validation.value.barcode = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('name')) {
+    validation.value.name = error.response.data.errors.name[0];
+  } else {
+    validation.value.name = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('brands')) {
+    validation.value.brands = error.response.data.errors.brands[0];
+  } else {
+    validation.value.brands = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('price')) {
+    validation.value.price = error.response.data.errors.price[0];
+  } else {
+    validation.value.price = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('maxstock')) {
+    validation.value.maxstock = error.response.data.errors.maxstock[0];
+  } else {
+    validation.value.maxstock = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('minstock')) {
+    validation.value.minstock = error.response.data.errors.minstock[0];
+  } else {
+    validation.value.minstock = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('id_category')) {
+    validation.value.id_category = error.response.data.errors.id_category[0];
+  } else {
+    validation.value.id_category = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('id_unit')) {
+    validation.value.id_unit = error.response.data.errors.id_unit[0];
+  } else {
+    validation.value.id_unit = '';
+  }
+};
 
 const checksession = async () => {
   try {
@@ -170,56 +214,9 @@ const postApiData = async () => {
     ispostingdata.value = false;
     postData.price = formatRupiah(postData.price);
     postData.buyprice = formatRupiah(postData.buyprice);
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      if (error.response.status == 500) {
-        showerror('Error ! Got Problem With Internal Server');
-      } else if (error.response.status == 400) {
-        if (error.response.data.errors.hasOwnProperty('barcode')) {
-          validation.value.barcode = error.response.data.errors.barcode[0];
-        } else {
-          validation.value.barcode = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('name')) {
-          validation.value.name = error.response.data.errors.name[0];
-        } else {
-          validation.value.name = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('brands')) {
-          validation.value.brands = error.response.data.errors.brands[0];
-        } else {
-          validation.value.brands = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('price')) {
-          validation.value.price = error.response.data.errors.price[0];
-        } else {
-          validation.value.price = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('maxstock')) {
-          validation.value.maxstock = error.response.data.errors.maxstock[0];
-        } else {
-          validation.value.maxstock = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('minstock')) {
-          validation.value.minstock = error.response.data.errors.minstock[0];
-        } else {
-          validation.value.minstock = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('id_category')) {
-          validation.value.id_category = error.response.data.errors.id_category[0];
-        } else {
-          validation.value.id_category = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('id_unit')) {
-          validation.value.id_unit = error.response.data.errors.id_unit[0];
-        } else {
-          validation.value.id_unit = '';
-        }
-      } else {
-        showerror('Error ! Got Problem With Internal Server');
-      }
-    }
+    const exception = new ex(error);
+    exception.func400 = manageerror;
+    exception.showError();
   }
 };
 const putApiData = async () => {
@@ -247,56 +244,9 @@ const putApiData = async () => {
   } catch (error) {
     ispostingdata.value = false;
     postData.price = formatRupiah(postData.price);
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      if (error.response.status == 500) {
-        showerror('Error ! Got Problem With Internal Server');
-      } else if (error.response.status == 400) {
-        if (error.response.data.errors.hasOwnProperty('barcode')) {
-          validation.value.barcode = error.response.data.errors.barcode[0];
-        } else {
-          validation.value.barcode = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('name')) {
-          validation.value.name = error.response.data.errors.name[0];
-        } else {
-          validation.value.name = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('brands')) {
-          validation.value.brands = error.response.data.errors.brands[0];
-        } else {
-          validation.value.brands = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('price')) {
-          validation.value.price = error.response.data.errors.price[0];
-        } else {
-          validation.value.price = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('maxstock')) {
-          validation.value.maxstock = error.response.data.errors.maxstock[0];
-        } else {
-          validation.value.maxstock = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('minstock')) {
-          validation.value.minstock = error.response.data.errors.minstock[0];
-        } else {
-          validation.value.minstock = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('id_category')) {
-          validation.value.id_category = error.response.data.errors.id_category[0];
-        } else {
-          validation.value.id_category = '';
-        }
-        if (error.response.data.errors.hasOwnProperty('id_unit')) {
-          validation.value.id_unit = error.response.data.errors.id_unit[0];
-        } else {
-          validation.value.id_unit = '';
-        }
-      } else {
-        showerror('Error ! Got Problem With Internal Server');
-      }
-    }
+    const exception = new ex(error);
+    exception.func400 = manageerror;
+    exception.showError();
   }
 };
 const backtomaster = () => {

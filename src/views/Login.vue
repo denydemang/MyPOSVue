@@ -4,6 +4,7 @@ import axios from 'axios';
 // import { useRouter } from 'vue-router';
 import checkuser from '@/auth.js';
 import myenc from '@/myencription.js';
+import ex from '@/exception.js';
 
 // const router = useRouter();
 const isLoading = ref(true);
@@ -23,6 +24,37 @@ const apiurl = process.env.VUE_APP_API_URL;
 
 const branch = process.env.VUE_APP_BRANCH;
 
+const manageerrorempty = (error) => {
+  const dataerrors = error.response.data.errors;
+  if (dataerrors.hasOwnProperty('username')) {
+    invalidSubmit.value.username = true;
+    invalidSubmit.value.general = false;
+    invalidSubmit.value.servererror = false;
+  } else {
+    invalidSubmit.value.username = false;
+  }
+  if (dataerrors.hasOwnProperty('password')) {
+    invalidSubmit.value.password = true;
+    invalidSubmit.value.general = false;
+    invalidSubmit.value.servererror = false;
+  } else {
+    invalidSubmit.value.password = false;
+  }
+};
+const managerrorserver = (error) => {
+  invalidSubmit.value.servererror = true;
+  invalidSubmit.value.general = false;
+  invalidSubmit.value.username = false;
+  invalidSubmit.value.password = false;
+};
+const manageerrorinvalid = (error) => {
+  invalidSubmit.value.general = true;
+  invalidSubmit.value.username = false;
+  invalidSubmit.value.password = false;
+  invalidSubmit.value.servererror = false;
+  postDATA.password = '';
+  usernameform.value.focus();
+};
 const postUSER = async () => {
   isFetchingdata.value = true;
   try {
@@ -38,44 +70,14 @@ const postUSER = async () => {
     window.location.href = '/admin';
   } catch (error) {
     isFetchingdata.value = false;
+    const exception = new ex(error);
 
-    if (error.message == 'Network Error') {
-      invalidSubmit.value.servererror = true;
-      invalidSubmit.value.general = false;
-      invalidSubmit.value.username = false;
-      invalidSubmit.value.password = false;
-    } else {
-      const status = error.response.status;
-      if (status == 400) {
-        const dataerrors = error.response.data.errors;
-        if (dataerrors.hasOwnProperty('username')) {
-          invalidSubmit.value.username = true;
-          invalidSubmit.value.general = false;
-          invalidSubmit.value.servererror = false;
-        } else {
-          invalidSubmit.value.username = false;
-        }
-        if (dataerrors.hasOwnProperty('password')) {
-          invalidSubmit.value.password = true;
-          invalidSubmit.value.general = false;
-          invalidSubmit.value.servererror = false;
-        } else {
-          invalidSubmit.value.password = false;
-        }
-      } else if (status == 401) {
-        invalidSubmit.value.general = true;
-        invalidSubmit.value.username = false;
-        invalidSubmit.value.password = false;
-        invalidSubmit.value.servererror = false;
-        postDATA.password = '';
-        usernameform.value.focus();
-      } else {
-        invalidSubmit.value.servererror = true;
-        invalidSubmit.value.general = false;
-        invalidSubmit.value.username = false;
-        invalidSubmit.value.password = false;
-      }
-    }
+    exception.funcnetworkerror = managerrorserver;
+    exception.func400 = manageerrorempty;
+    exception.func401 = manageerrorinvalid;
+    exception.func500 = managerrorserver;
+    exception.showError();
+    // ex(error, managerrorserver, managerrorinvalid, invaliderror, null, null, null, null, managerrorserver);
   }
 };
 onBeforeMount(async () => {
@@ -93,8 +95,8 @@ onBeforeMount(async () => {
   </div>
   <div class="mycontent">
     <section class="section">
-      <div class="container pt-5">
-        <div class="d-flex justify-content-center">
+      <div class="container">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100vh">
           <div style="width: 400px">
             <div class="login-brand">My POS Vue</div>
             <div class="card card-primary">

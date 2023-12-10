@@ -60,6 +60,8 @@ import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import axios from 'axios';
+import ex from '@/exception.js';
+
 onMounted(() => {
   getUsers();
 });
@@ -88,6 +90,13 @@ const cols =
     { field: 'actions', title: 'Actions' }
   ]) || [];
 
+const manageerror = (error, name) => {
+  if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
+    showerror('User ' + name + ' Already Used In Transaction Cannot Be Deleted');
+  } else {
+    showerror('ERROR!!! Internal Server Error');
+  }
+};
 const getUsers = async () => {
   try {
     loading.value = true;
@@ -126,11 +135,8 @@ const getUsers = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataUsers;
   } catch (error) {
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      showerror('Error ! Got Problem With Internal Server');
-    }
+    const exception = new ex(error);
+    exception.showError();
   }
 
   loading.value = false;
@@ -149,15 +155,10 @@ const deleteUser = async (id, name) => {
     iziSuccess('Success', 'Successfully Deleted Users ' + name);
   } catch (error) {
     isdeleting.value = false;
-    if (error.message == 'Request failed with status code 500') {
-      if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-        showerror('User ' + name + ' Already Used In Transaction Cannot Be Deleted');
-      } else {
-        showerror('ERROR!!! Internal Server Error');
-      }
-    } else {
-      showerror('ERROR!!! Internal Server Error');
-    }
+    const exception = new ex(error);
+    exception.func500 = manageerror;
+    exception.additionaldata = name;
+    exception.showError();
   }
 };
 
@@ -207,11 +208,8 @@ const filterCategory = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataUsers;
   } catch (error) {
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      showerror('Error ! Got Problem With Internal Server');
-    }
+    const exception = new ex(error);
+    exception.showError();
   }
 
   loading.value = false;
@@ -251,7 +249,8 @@ const activate = async (data) => {
     iziSuccess('Success', 'Successfully Activate ' + data.username);
     getUsers();
   } catch (error) {
-    showerror('Error ! Got Problem With Internal Server');
+    const exception = new ex(error);
+    exception.showError();
   }
 };
 const deactivate = async (data) => {
@@ -264,7 +263,8 @@ const deactivate = async (data) => {
     iziSuccess('Success', 'Successfully Deactivate ' + data.username);
     getUsers();
   } catch (error) {
-    showerror('Error ! Got Problem With Internal Server');
+    const exception = new ex(error);
+    exception.showError();
   }
 };
 //mengekspose function agar function getUsers bisa di jalankan di component parent

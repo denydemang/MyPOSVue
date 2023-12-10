@@ -7,6 +7,7 @@ import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import { formatRupiah } from '@/rupiahformatter.js';
 import enc from '@/myencription.js';
+import ex from '@/exception.js';
 import axios from 'axios';
 onMounted(() => {
   getApiProduct();
@@ -23,7 +24,13 @@ const total_rows = ref(0);
 
 const params = reactive({ current_page: 1, pagesize: 10, search: '', orderby: 'id', ascdesc: 'asc' });
 const rows = ref(null);
-
+const manageerror = (error, name) => {
+  if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
+    showerror('Product ' + name + ' Already Used In Transaction Cannot Be Deleted');
+  } else {
+    showerror('ERROR!!! Internal Server Error');
+  }
+};
 const cols =
   ref([
     { field: 'rownumber', title: '#', isUnique: true },
@@ -59,11 +66,8 @@ const getApiProduct = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataProduct;
   } catch (error) {
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      showerror('Error ! Got Problem With Internal Server');
-    }
+    const exception = new ex(error);
+    exception.showError();
     total_rows.value = 0;
     rows.value = null;
   }
@@ -88,11 +92,8 @@ const filterProduct = async () => {
     total_rows.value = totalAllRows;
     rows.value = dataProduct;
   } catch (error) {
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      showerror('Error ! Got Problem With Internal Server');
-    }
+    const exception = new ex(error);
+    exception.showError();
     total_rows.value = 0;
     rows.value = null;
   }
@@ -112,15 +113,10 @@ const deleteProduct = async (id, name) => {
     iziSuccess('Success', 'Successfully Deleted Product ' + name);
   } catch (error) {
     isdeleting.value = false;
-    if (error.message == 'Request failed with status code 500') {
-      if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-        showerror('Product ' + name + ' Already Used In Transaction Cannot Be Deleted');
-      } else {
-        showerror('ERROR!!! Internal Server Error');
-      }
-    } else {
-      showerror('ERROR!!! Internal Server Error');
-    }
+    const exception = new ex(error);
+    exception.func500 = manageerror;
+    exception.additionaldata = name;
+    exception.showError();
   }
 };
 
@@ -183,3 +179,35 @@ const viewEdit = (data) => {
     </vue3-datatable>
   </div>
 </template>
+<style scoped>
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* Warna latar belakang transparan */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Pastikan lebih tinggi dari elemen lain di halaman */
+}
+
+.loader {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from 'vue';
 import { iziError, iziSuccess } from '@/izitoast.js';
+import ex from '@/exception.js';
 import axios from 'axios';
 import UserTable from '@/components/UserTable.vue';
 const MyChild = ref(null);
@@ -32,6 +33,28 @@ const postData = reactive({
   id_role: null,
   id: ''
 });
+const manageerror = (error) => {
+  if (error.response.data.errors.hasOwnProperty('name')) {
+    invalidSubmit.value.name = error.response.data.errors.name[0];
+  } else {
+    invalidSubmit.value.name = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('username')) {
+    invalidSubmit.value.username = error.response.data.errors.username[0];
+  } else {
+    invalidSubmit.value.username = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('password')) {
+    invalidSubmit.value.password = error.response.data.errors.password[0];
+  } else {
+    invalidSubmit.value.password = '';
+  }
+  if (error.response.data.errors.hasOwnProperty('id_role')) {
+    invalidSubmit.value.id_role = error.response.data.errors.id_role[0];
+  } else {
+    invalidSubmit.value.id_role = '';
+  }
+};
 const clearData = () => {
   invalidSubmit.value.branchcode = '';
   invalidSubmit.value.username = '';
@@ -57,7 +80,8 @@ const getApiRole = async () => {
     });
     roleData.value = response.data.data;
   } catch (error) {
-    iziError('Error', error.message);
+    const exception = new ex(error);
+    exception.showError();
   }
 };
 const postApiData = async () => {
@@ -87,40 +111,9 @@ const postApiData = async () => {
       $('#modalUser').modal('hide');
     } catch (error) {
       isPostingData.value = false;
-      if (error.message == 'Network Error') {
-        iziError('Error', 'INTERNAL SERVER ERROR');
-      } else {
-        if (error.message == 'Network Error') {
-          showerror('ERROR ! The Server Connection Cannot Be Reached');
-        } else {
-          if (error.response.status == 500) {
-            showerror('Error ! Got Problem With Internal Server');
-          } else if (error.response.status == 400) {
-            if (error.response.data.errors.hasOwnProperty('name')) {
-              invalidSubmit.value.name = error.response.data.errors.name[0];
-            } else {
-              invalidSubmit.value.name = '';
-            }
-            if (error.response.data.errors.hasOwnProperty('username')) {
-              invalidSubmit.value.username = error.response.data.errors.username[0];
-            } else {
-              invalidSubmit.value.username = '';
-            }
-            if (error.response.data.errors.hasOwnProperty('password')) {
-              invalidSubmit.value.password = error.response.data.errors.password[0];
-            } else {
-              invalidSubmit.value.password = '';
-            }
-            if (error.response.data.errors.hasOwnProperty('id_role')) {
-              invalidSubmit.value.id_role = error.response.data.errors.id_role[0];
-            } else {
-              invalidSubmit.value.id_role = '';
-            }
-          } else {
-            showerror('Error ! Got Problem With Internal Server');
-          }
-        }
-      }
+      const exception = new ex(error);
+      exception.func400 = manageerror;
+      exception.showError();
     }
   }
 };
@@ -141,34 +134,9 @@ const putApiData = async () => {
     $('#modalUser').modal('hide');
   } catch (error) {
     isPostingData.value = false;
-    if (error.message == 'Network Error') {
-      iziError('Error', 'INTERNAL SERVER ERROR');
-    } else {
-      if (error.message == 'Network Error') {
-        iziError('Error', 'INTERNAL SERVER ERROR');
-      } else {
-        if (error.message == 'Network Error') {
-          showerror('ERROR ! The Server Connection Cannot Be Reached');
-        } else {
-          if (error.response.status == 500) {
-            showerror('Error ! Got Problem With Internal Server');
-          } else if (error.response.status == 400) {
-            if (error.response.data.errors.hasOwnProperty('name')) {
-              invalidSubmit.value.name = error.response.data.errors.name[0];
-            } else {
-              invalidSubmit.value.name = '';
-            }
-            if (error.response.data.errors.hasOwnProperty('id_role')) {
-              invalidSubmit.value.id_role = error.response.data.errors.id_role[0];
-            } else {
-              invalidSubmit.value.id_role = '';
-            }
-          } else {
-            showerror('Error ! Got Problem With Internal Server');
-          }
-        }
-      }
-    }
+    const exception = new ex(error);
+    exception.func400 = manageerror;
+    exception.showError();
   }
 };
 const addNewView = (title) => {

@@ -1,6 +1,8 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { iziError, iziSuccess } from '@/izitoast.js';
+import { showerror } from '@/jqueryconfirm';
+import ex from '@/exception.js';
 import axios from 'axios';
 import CategoryTable from '@/components/CategoryTable.vue';
 
@@ -28,7 +30,18 @@ const clearData = () => {
   invalidSubmit.value.servererror = false;
   postData.name = '';
 };
-
+const manageerroinvalid = (error) => {
+  invalidSubmit.value.name = true;
+  invalidSubmit.value.namemessage = error.response.data.errors.name[0];
+};
+const manageerrorexist = (error) => {
+  if (error.response.data.errors.general[0].includes('SQLSTATE[23000]')) {
+    invalidSubmit.value.name = true;
+    invalidSubmit.value.namemessage = 'Name Already Exists';
+  } else {
+    showerror('INTERNAL SERVER ERROR');
+  }
+};
 const postApiData = async () => {
   isPostingData.value = true;
   try {
@@ -46,15 +59,9 @@ const postApiData = async () => {
     $('#modalCategory').modal('hide');
   } catch (error) {
     isPostingData.value = false;
-    if (error.message == 'Network Error') {
-      iziError('Error', 'INTERNAL SERVER ERROR');
-    } else {
-      const status = error.response.status;
-      if (status == 400) {
-        invalidSubmit.value.name = true;
-        invalidSubmit.value.namemessage = error.response.data.errors.name[0];
-      }
-    }
+    const exception = new ex(error);
+    exception.func400 = manageerroinvalid;
+    exception.showError();
   }
 };
 const putApiData = async () => {
@@ -74,23 +81,10 @@ const putApiData = async () => {
     $('#modalCategory').modal('hide');
   } catch (error) {
     isPostingData.value = false;
-    if (error.message == 'Network Error') {
-      iziError('Error', 'INTERNAL SERVER ERROR');
-    } else {
-      const status = error.response.status;
-      if (status == 400) {
-        invalidSubmit.value.name = true;
-        invalidSubmit.value.namemessage = error.response.data.errors.name[0];
-      }
-      if (status == 500) {
-        if (error.response.data.errors.general[0].includes('SQLSTATE[23000]')) {
-          invalidSubmit.value.name = true;
-          invalidSubmit.value.namemessage = 'Name Already Exists';
-        } else {
-          iziError('Error', 'INTERNAL SERVER ERROR');
-        }
-      }
-    }
+    const exception = new ex(error);
+    exception.func400 = manageerroinvalid;
+    exception.func500 = manageerrorexist;
+    exception.showError();
   }
 };
 const addNewView = (title) => {

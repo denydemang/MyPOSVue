@@ -36,6 +36,7 @@ import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import axios from 'axios';
+import ex from '@/exception.js';
 onMounted(() => {
   getCategory();
 });
@@ -52,7 +53,13 @@ const total_rows = ref(0);
 
 const params = reactive({ current_page: 1, pagesize: 10, search: '' });
 const rows = ref(null);
-
+const manageerror = (error, name) => {
+  if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
+    showerror('Category ' + name + ' Already Used In Transaction Cannot Be Deleted');
+  } else {
+    showerror('ERROR!!! Internal Server Error');
+  }
+};
 const cols =
   ref([
     { field: 'no', title: '#', isUnique: true },
@@ -83,11 +90,8 @@ const getCategory = async () => {
     rows.value = dataCategory;
     console.log(dataCategory);
   } catch (error) {
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      showerror('Error ! Got Problem With Internal Server');
-    }
+    const exception = new ex(error);
+    exception.showError();
   }
 
   loading.value = false;
@@ -106,15 +110,10 @@ const deleteCategory = async (id, name) => {
     iziSuccess('Success', 'Successfully Deleted Category ' + name);
   } catch (error) {
     isdeleting.value = false;
-    if (error.message == 'Request failed with status code 500') {
-      if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-        showerror('Category ' + name + ' Already Used In Transaction Cannot Be Deleted');
-      } else {
-        showerror('ERROR!!! Internal Server Error');
-      }
-    } else {
-      showerror('ERROR!!! Internal Server Error');
-    }
+    const exception = new ex(error);
+    exception.func500 = manageerror;
+    exception.additionaldata = name;
+    exception.showError();
   }
 };
 
@@ -139,11 +138,8 @@ const filterCategory = async () => {
     });
     rows.value = dataCategory;
   } catch (error) {
-    if (error.message == 'Network Error') {
-      showerror('ERROR ! The Server Connection Cannot Be Reached');
-    } else {
-      showerror('Error ! Got Problem With Internal Server');
-    }
+    const exception = new ex(error);
+    exception.showError();
   }
 
   loading.value = false;
