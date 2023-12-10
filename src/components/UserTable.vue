@@ -34,13 +34,19 @@
       noDataContent="No records found in the database."
     >
       <template #active="data">
-        <span v-if="data.value.active" class="badge badge-sm badge-warning"> {{ data.value.active ? 'active' : 'inactive' }}</span>
-        <span v-if="!data.value.active" class="badge badge-sm badge-danger"> {{ data.value.active ? 'active' : 'inactive' }}</span>
+        <span v-if="data.value.active" class="badge badge-sm badge-primary"> {{ data.value.active ? 'active' : 'inactive' }}</span>
+        <span v-if="!data.value.active" class="badge badge-sm badge-secondary"> {{ data.value.active ? 'active' : 'inactive' }}</span>
       </template>
       <template #actions="data">
         <div>
-          <button type="button" data-toggle="modal" data-target="#modalUser" class="btn btn-success btn-sm" @click="viewEdit(data.value)"><i class="fas fa-edit"></i> Edit</button>
-          <button type="button" class="btn btn-danger btn-sm" @click="viewDelete(data.value)"><i class="fas fa-trash"></i> Delete</button>
+          <button type="button" data-toggle="modal" data-target="#modalUser" class="btn btn-success btn-sm mr-1" @click="viewEdit(data.value)">
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <button type="button" class="btn btn-danger btn-sm mr-1" @click="viewDelete(data.value)"><i class="fas fa-trash"></i> Delete</button>
+          <button type="button" v-if="!data.value.active" class="btn btn-primary btn-sm mr-1" @click="activate(data.value)"><i class="fas fa-check"></i>Activate</button>
+          <button type="button" v-if="data.value.active" class="btn btn-secondary-outline btn-sm mr-1" @click="deactivate(data.value)">
+            <i class="fas fa-times-circle"></i> Deactivate
+          </button>
         </div>
       </template>
     </vue3-datatable>
@@ -143,7 +149,6 @@ const deleteUser = async (id, name) => {
     iziSuccess('Success', 'Successfully Deleted Users ' + name);
   } catch (error) {
     isdeleting.value = false;
-    console.log(error);
     if (error.message == 'Request failed with status code 500') {
       if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
         showerror('User ' + name + ' Already Used In Transaction Cannot Be Deleted');
@@ -234,6 +239,33 @@ const viewEdit = (data) => {
 };
 const viewDelete = (data) => {
   showconfirmdelete(data, deleteUser, 'User With Name');
+};
+
+const activate = async (data) => {
+  try {
+    await axios.patch(`${apiurl}/api/users/activate/${data.id}`, '', {
+      headers: {
+        Authorization: token
+      }
+    });
+    iziSuccess('Success', 'Successfully Activate ' + data.username);
+    getUsers();
+  } catch (error) {
+    showerror('Error ! Got Problem With Internal Server');
+  }
+};
+const deactivate = async (data) => {
+  try {
+    await axios.patch(`${apiurl}/api/users/deactivate/${data.id}`, '', {
+      headers: {
+        Authorization: token
+      }
+    });
+    iziSuccess('Success', 'Successfully Deactivate ' + data.username);
+    getUsers();
+  } catch (error) {
+    showerror('Error ! Got Problem With Internal Server');
+  }
 };
 //mengekspose function agar function getUsers bisa di jalankan di component parent
 defineExpose({
