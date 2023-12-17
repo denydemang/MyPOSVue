@@ -1,9 +1,11 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from 'vue';
 import { iziError, iziSuccess } from '@/izitoast.js';
+import { useRouter, useRoute } from 'vue-router';
 import ex from '@/exception.js';
 import axios from 'axios';
 import UserTable from '@/components/UserTable.vue';
+import checkview from '@/access.js';
 const MyChild = ref(null);
 const isEdit = ref(false);
 const apiurl = process.env.VUE_APP_API_URL;
@@ -12,6 +14,7 @@ const token = localStorage.getItem('token');
 const titleModal = ref('');
 const roleData = ref([]);
 const isPostingData = ref(false);
+const router = useRouter();
 const invalidSubmit = ref({
   branchcode: '',
   username: '',
@@ -23,6 +26,11 @@ const invalidSubmit = ref({
 });
 onBeforeMount(() => {
   getApiRole();
+  if (!checkview('master_user')) {
+    router.push({
+      name: 'notfoundthrow'
+    });
+  }
 });
 const postData = reactive({
   branchcode: branch,
@@ -86,7 +94,7 @@ const getApiRole = async () => {
 };
 const postApiData = async () => {
   isPostingData.value = true;
-  if (postData.password.toString() != postData.konfirmpw.toString()) {
+  if (postData.password != postData.konfirmpw) {
     invalidSubmit.value.konfirmpw = 'Confirm Password Not Same';
     invalidSubmit.value.branchcode = '';
     invalidSubmit.value.name = '';

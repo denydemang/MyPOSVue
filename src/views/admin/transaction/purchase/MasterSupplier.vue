@@ -1,13 +1,23 @@
-<script setup></script>
+<script setup>
+import { onBeforeMount } from 'vue';
+import { useRouter } from 'vue-router';
+import checkview from '@/access.js';
+const router = useRouter();
+onBeforeMount(() => {
+  if (!checkview('master_supplier')) {
+    router.push({
+      name: 'notfoundthrow'
+    });
+  }
+});
+</script>
 <template>
   <!-- Main Content -->
   <div class="main-content">
     <section class="section">
       <div class="section-header d-flex justify-content-between">
         <h1>Master Supplier</h1>
-        <span class=""
-          ><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'mastersupplier' }">mastersupplier</router-link>
-        </span>
+        <span class=""><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'mastersupplier' }">mastersupplier</router-link> </span>
       </div>
       <div class="row">
         <div class="col-lg-3 col-md-6 col-sm-6 col-12">
@@ -548,9 +558,7 @@
                         </div>
                       </td>
                       <td>
-                        <a href="#" class="font-weight-600"
-                          ><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a
-                        >
+                        <a href="#" class="font-weight-600"><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a>
                       </td>
                       <td>
                         <a class="btn btn-primary btn-action mr-1" data-toggle="tooltip" title="Edit"><i class="fas fa-pencil-alt"></i></a>
@@ -575,9 +583,7 @@
                         </div>
                       </td>
                       <td>
-                        <a href="#" class="font-weight-600"
-                          ><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a
-                        >
+                        <a href="#" class="font-weight-600"><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a>
                       </td>
                       <td>
                         <a class="btn btn-primary btn-action mr-1" data-toggle="tooltip" title="Edit"><i class="fas fa-pencil-alt"></i></a>
@@ -602,9 +608,7 @@
                         </div>
                       </td>
                       <td>
-                        <a href="#" class="font-weight-600"
-                          ><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a
-                        >
+                        <a href="#" class="font-weight-600"><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a>
                       </td>
                       <td>
                         <a class="btn btn-primary btn-action mr-1" data-toggle="tooltip" title="Edit"><i class="fas fa-pencil-alt"></i></a>
@@ -629,9 +633,7 @@
                         </div>
                       </td>
                       <td>
-                        <a href="#" class="font-weight-600"
-                          ><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a
-                        >
+                        <a href="#" class="font-weight-600"><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a>
                       </td>
                       <td>
                         <a class="btn btn-primary btn-action mr-1" data-toggle="tooltip" title="Edit"><i class="fas fa-pencil-alt"></i></a>
@@ -656,9 +658,7 @@
                         </div>
                       </td>
                       <td>
-                        <a href="#" class="font-weight-600"
-                          ><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a
-                        >
+                        <a href="#" class="font-weight-600"><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a>
                       </td>
                       <td>
                         <a class="btn btn-primary btn-action mr-1" data-toggle="tooltip" title="Edit"><i class="fas fa-pencil-alt"></i></a>
@@ -683,9 +683,7 @@
                         </div>
                       </td>
                       <td>
-                        <a href="#" class="font-weight-600"
-                          ><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a
-                        >
+                        <a href="#" class="font-weight-600"><img src="/assets/img/avatar/avatar-1.png" alt="avatar" width="30" class="rounded-circle mr-1" /> Bagus Dwi Cahya</a>
                       </td>
                       <td>
                         <a class="btn btn-primary btn-action mr-1" data-toggle="tooltip" title="Edit"><i class="fas fa-pencil-alt"></i></a>

@@ -4,6 +4,9 @@ import { iziError, iziSuccess } from '@/izitoast.js';
 import { showerror } from '@/jqueryconfirm';
 import ex from '@/exception.js';
 import axios from 'axios';
+import checkview from '@/access.js';
+import { onBeforeMount } from 'vue';
+import { useRouter } from 'vue-router';
 import CategoryTable from '@/components/CategoryTable.vue';
 
 //MyChild merupakan ref dari component MasterCategory
@@ -18,6 +21,7 @@ const invalidSubmit = ref({
   name: false,
   namemessage: ''
 });
+const route = useRouter();
 
 const postData = reactive({
   branchcode: branch,
@@ -97,6 +101,13 @@ const populateModal = (data) => {
   postData.id = data[0].id;
   postData.name = data[0].name;
 };
+onBeforeMount(() => {
+  if (!checkview('master_category')) {
+    route.push({
+      name: 'notfoundthrow'
+    });
+  }
+});
 </script>
 <template>
   <!-- Main Content -->

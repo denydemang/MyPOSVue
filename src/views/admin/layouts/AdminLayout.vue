@@ -9,8 +9,6 @@ import checkuser from '@/auth.js';
 // State untuk menentukan apakah loading sedang aktif atau tidak
 const isLoading = ref(true);
 
-// const router = useRouter();
-
 onBeforeMount(async () => {
   const isAuthenticated = await checkuser();
   // console.log(isAuthenticated);

@@ -1,9 +1,82 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onBeforeMount } from 'vue';
 import { useRoute } from 'vue-router';
+import myenc from '@/myencription.js';
 import jquery from 'jquery';
 const $ = jquery;
 const route = useRoute();
+
+const viewmenu = ref({
+  dashboard: 0,
+  master_category: 0,
+  master_item: 0,
+  master_user: 0,
+  role_user: 0,
+  master_supplier: 0,
+  purchase: 0,
+  purchase_return: 0,
+  master_customer: 0,
+  sales: 0,
+  sales_return: 0,
+  company_profiles: 0,
+  grn: 0,
+  stock: 0
+});
+const accessview = JSON.parse(localStorage.getItem('accessview'));
+accessview.map((item) => {
+  item.id_module = parseInt(myenc.decrypt(item.id_module));
+  item.sub_menu = myenc.decrypt(item.sub_menu);
+  item.xView = parseInt(myenc.decrypt(item.xView));
+  return item;
+});
+onBeforeMount(() => {
+  for (let i = 0; i < accessview.length; i++) {
+    switch (accessview[i].sub_menu) {
+      case 'dashboard':
+        viewmenu.value.dashboard = accessview[i].xView;
+        break;
+      case 'master_category':
+        viewmenu.value.master_category = accessview[i].xView;
+        break;
+      case 'master_item':
+        viewmenu.value.master_item = accessview[i].xView;
+        break;
+      case 'master_user':
+        viewmenu.value.master_user = accessview[i].xView;
+        break;
+      case 'role_user':
+        viewmenu.value.role_user = accessview[i].xView;
+        break;
+      case 'master_supplier':
+        viewmenu.value.master_supplier = accessview[i].xView;
+        break;
+      case 'purchase':
+        viewmenu.value.purchase = accessview[i].xView;
+        break;
+      case 'purchase_return':
+        viewmenu.value.purchase_return = accessview[i].xView;
+        break;
+      case 'master_customer':
+        viewmenu.value.master_customer = accessview[i].xView;
+        break;
+      case 'sales':
+        viewmenu.value.sales = accessview[i].xView;
+        break;
+      case 'sales_return':
+        viewmenu.value.sales_return = accessview[i].xView;
+        break;
+      case 'company_profiles':
+        viewmenu.value.company_profiles = accessview[i].xView;
+        break;
+      case 'grn':
+        viewmenu.value.grn = accessview[i].xView;
+        break;
+      case 'stock':
+        viewmenu.value.stock = accessview[i].xView;
+        break;
+    }
+  }
+});
 
 // Sub sub menu
 const isadmin = ref(false);
@@ -22,7 +95,7 @@ const issalesreturn = ref(false);
 const isgrn = ref(false);
 const isinoutitem = ref(false);
 
-const isActive = async () => {
+const isActive = () => {
   // ADMIN MENU/DASHBOARD
   if (route.name == 'admin') {
     isadmin.value = true;
@@ -152,50 +225,71 @@ onMounted(() => {
         <a href="index.html">St</a>
       </div>
       <ul class="sidebar-menu">
-        <li class="menu-header">Dashboard</li>
-        <li class="nav-item" :class="{ active: isadmin }">
+        <li class="menu-header" v-if="viewmenu.dashboard">Dashboard</li>
+        <li class="nav-item" :class="{ active: isadmin }" v-if="viewmenu.dashboard">
           <router-link class="nav-link" :to="{ name: 'admin' }"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></router-link>
         </li>
-        <li class="menu-header">Master</li>
-        <li class="nav-item dropdown" :class="{ active: ismastercategory || ismasterproduct || ismasterproductcreate || ismasterproductedit }">
+        <li class="menu-header" v-if="viewmenu.master_category || viewmenu.master_item || viewmenu.master_user || viewmenu.role_user">Master</li>
+        <li
+          class="nav-item dropdown"
+          v-if="viewmenu.master_category || viewmenu.master_item"
+          :class="{ active: ismastercategory || ismasterproduct || ismasterproductcreate || ismasterproductedit }"
+        >
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-cubes"></i> <span>Product Management</span></a>
           <ul class="dropdown-menu dropdownproductmanagement">
-            <li :class="{ active: ismastercategory }"><router-link class="nav-link" :to="{ name: 'mastercategory' }">Master Category</router-link></li>
-            <li :class="{ active: ismasterproduct || ismasterproductcreate || ismasterproductedit }">
+            <li :class="{ active: ismastercategory }" v-if="viewmenu.master_category">
+              <router-link class="nav-link" :to="{ name: 'mastercategory' }">Master Category</router-link>
+            </li>
+            <li :class="{ active: ismasterproduct || ismasterproductcreate || ismasterproductedit }" v-if="viewmenu.master_item">
               <router-link class="nav-link" :to="{ name: 'masterproduct' }">Master Item/Product</router-link>
             </li>
             <!-- <li><a class="nav-link" href="layout-top-navigation.html">Top Navigation</a></li> -->
           </ul>
         </li>
-        <li class="nav-item dropdown" :class="{ active: ismasteruser | isroleuser }">
+        <li class="nav-item dropdown" :class="{ active: ismasteruser | isroleuser }" v-if="viewmenu.master_user || viewmenu.role_user">
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-user-friends"></i> <span>User Management</span></a>
           <ul class="dropdown-menu dropdownusermanagement">
-            <li :class="{ active: ismasteruser }"><router-link class="nav-link" :to="{ name: 'masteruser' }">Master User</router-link></li>
-            <li :class="{ active: isroleuser }"><router-link class="nav-link" :to="{ name: 'roleuser' }">Role User</router-link></li>
+            <li :class="{ active: ismasteruser }" v-if="viewmenu.master_user"><router-link class="nav-link" :to="{ name: 'masteruser' }">Master User</router-link></li>
+            <li :class="{ active: isroleuser }" v-if="viewmenu.role_user"><router-link class="nav-link" :to="{ name: 'roleuser' }">Role User</router-link></li>
           </ul>
         </li>
-        <li class="menu-header">Transaction</li>
-        <li class="nav-item dropdown" :class="{ active: ismastersupplier | ispurchase | ispurchasereturn }">
+        <li
+          class="menu-header"
+          v-if="viewmenu.master_supplier || viewmenu.purchase || viewmenu.purchase_return || viewmenu.master_customer || viewmenu.sales || viewmenu.sales_return"
+        >
+          Transaction
+        </li>
+        <li
+          class="nav-item dropdown"
+          :class="{ active: ismastersupplier | ispurchase | ispurchasereturn }"
+          v-if="viewmenu.master_supplier || viewmenu.purchase || viewmenu.purchase_return"
+        >
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="far fa-file-alt"></i> <span>Purchase Transaction</span></a>
           <ul class="dropdown-menu dropdwonpurchasetrans">
-            <li :class="{ active: ismastersupplier }"><RouterLink class="nav-link" :to="{ name: 'mastersupplier' }">Master Supplier</RouterLink></li>
-            <li :class="{ active: ispurchase }"><RouterLink class="nav-link" :to="{ name: 'purchase' }">Purchase</RouterLink></li>
-            <li :class="{ active: ispurchasereturn }"><RouterLink class="nav-link" :to="{ name: 'purchasereturn' }">Purchase Return</RouterLink></li>
+            <li :class="{ active: ismastersupplier }" v-if="viewmenu.master_supplier">
+              <RouterLink class="nav-link" :to="{ name: 'mastersupplier' }">Master Supplier</RouterLink>
+            </li>
+            <li :class="{ active: ispurchase }" v-if="viewmenu.purchase"><RouterLink class="nav-link" :to="{ name: 'purchase' }">Purchase</RouterLink></li>
+            <li :class="{ active: ispurchasereturn }" v-if="viewmenu.purchase_return">
+              <RouterLink class="nav-link" :to="{ name: 'purchasereturn' }">Purchase Return</RouterLink>
+            </li>
           </ul>
         </li>
-        <li class="nav-item dropdown" :class="{ active: ismastercustomer | issales | issalesreturn }">
+        <li class="nav-item dropdown" :class="{ active: ismastercustomer | issales | issalesreturn }" v-if="viewmenu.master_customer || viewmenu.sales || viewmenu.sales_return">
           <a href="#" class="nav-link has-dropdown"><i class="fas fa-th-large"></i> <span>Sales Transaction</span></a>
           <ul class="dropdown-menu dropdwonsalestrans">
-            <li :class="{ active: ismastercustomer }"><RouterLink class="nav-link" :to="{ name: 'mastercustomer' }">Master Customer</RouterLink></li>
-            <li :class="{ active: issales }"><RouterLink class="nav-link" :to="{ name: 'sales' }">Sales</RouterLink></li>
-            <li :class="{ active: issalesreturn }"><RouterLink class="nav-link" :to="{ name: 'salesreturn' }">Sales Return</RouterLink></li>
+            <li :class="{ active: ismastercustomer }" v-if="viewmenu.master_customer">
+              <RouterLink class="nav-link" :to="{ name: 'mastercustomer' }">Master Customer</RouterLink>
+            </li>
+            <li :class="{ active: issales }" v-if="viewmenu.sales"><RouterLink class="nav-link" :to="{ name: 'sales' }">Sales</RouterLink></li>
+            <li :class="{ active: issalesreturn }" v-if="viewmenu.sales_return"><RouterLink class="nav-link" :to="{ name: 'salesreturn' }">Sales Return</RouterLink></li>
           </ul>
         </li>
-        <li class="menu-header">Inventory</li>
-        <li class="nav-item" :class="{ active: isgrn }">
+        <li class="menu-header" v-if="viewmenu.grn || viewmenu.stock">Inventory</li>
+        <li class="nav-item" :class="{ active: isgrn }" v-if="viewmenu.grn">
           <RouterLink :to="{ name: 'grn' }" class="nav-link"><i class="far fa-user"></i> <span>Goods Receive Notes</span></RouterLink>
         </li>
-        <li class="nav-item" :class="{ active: isinoutitem }">
+        <li class="nav-item" :class="{ active: isinoutitem }" v-if="viewmenu.stock">
           <RouterLink :to="{ name: 'inoutitem' }" class="nav-link"><i class="far fa-user"></i> <span>IN OUT PRODUCT/ITEM</span></RouterLink>
         </li>
         <li class="menu-header">Reports</li>

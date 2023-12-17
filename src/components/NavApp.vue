@@ -1,11 +1,21 @@
 <script setup>
 import { ref } from 'vue';
 import encryption from '@/myencription.js';
+import axios from 'axios';
 const name = ref(encryption.decrypt(localStorage.getItem('name'), ''));
+const token = localStorage.getItem('token');
+const apiUrl = process.env.VUE_APP_API_URL;
 
-const logout = () => {
-  localStorage.clear();
-  window.location.href = '/login';
+const logout = async () => {
+  try {
+    await axios.delete(`${apiUrl}/api/users/logout?token=${token}`);
+    localStorage.clear();
+    window.location.href = '/login';
+  } catch (error) {
+    localStorage.clear();
+    console.log(error);
+    window.location.href = '/login';
+  }
 };
 </script>
 <template>
@@ -217,7 +227,7 @@ const logout = () => {
           <a href="features-activities.html" class="dropdown-item has-icon"> <i class="fas fa-bolt"></i> Activities </a>
           <a href="features-settings.html" class="dropdown-item has-icon"> <i class="fas fa-cog"></i> Settings </a>
           <div class="dropdown-divider"></div>
-          <a href="" @click.preventDefault="logout()" class="dropdown-item has-icon text-danger"> <i class="fas fa-sign-out-alt"></i> Logout </a>
+          <a @click.preventDefault="logout" class="dropdown-item has-icon text-danger" style="cursor: pointer"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
       </li>
     </ul>

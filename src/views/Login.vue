@@ -60,13 +60,21 @@ const postUSER = async () => {
   try {
     const responseApi = await axios.post(`${apiurl}/api/users/login/${branch}`, postDATA);
     const userdata = responseApi.data.data;
+    const responseApiAccesView = await axios.get(`${apiurl}/api/roles/access/${userdata.token}`, postDATA);
+    const accesview = responseApiAccesView.data.data;
+
+    accesview.map((item) => {
+      item.id_module = myenc.encrypt(item.id_module.toString(), '');
+      item.sub_menu = myenc.encrypt(item.sub_menu.toString(), '');
+      item.xView = myenc.encrypt(item.xView.toString(), '');
+    });
     localStorage.setItem('id', myenc.encrypt(userdata.id.toString()));
     localStorage.setItem('branchcode', myenc.encrypt(userdata.branchcode.toString(), ''));
     localStorage.setItem('name', myenc.encrypt(userdata.name.toString(), ''));
     localStorage.setItem('role', myenc.encrypt(userdata.role.toString(), ''));
     localStorage.setItem('token', userdata.token);
     localStorage.setItem('username', myenc.encrypt(userdata.username.toString(), ''));
-
+    localStorage.setItem('accessview', JSON.stringify(accesview));
     window.location.href = '/admin';
   } catch (error) {
     isFetchingdata.value = false;
@@ -77,7 +85,6 @@ const postUSER = async () => {
     exception.func401 = manageerrorinvalid;
     exception.func500 = managerrorserver;
     exception.showError();
-    // ex(error, managerrorserver, managerrorinvalid, invaliderror, null, null, null, null, managerrorserver);
   }
 };
 onBeforeMount(async () => {

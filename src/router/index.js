@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-// import axios from 'axios';
 
 import AdminLayout from '@/views/admin/layouts/AdminLayout.vue';
 import DashboardView from '@/views/admin/DashboardView';
@@ -18,7 +17,8 @@ import GRN from '@/views/admin/inventory/GRN.vue';
 import INOUTITEM from '@/views/admin/inventory/INOUTITEM.vue';
 import Page404 from '@/views/Page404.vue';
 import Login from '@/views/Login.vue';
-// import CobaTable from '@/views/CobaTable.vue';
+
+
 
 const routes = [
   {
@@ -184,6 +184,15 @@ const routes = [
   {
     path: '/:pathMatch(.*)',
     name: 'notfound',
+    component: Page404,
+    meta: {
+      requiresAuth: true,
+      title: '404 NOT FOUND'
+    }
+  },
+  {
+    path: '/notfound',
+    name: 'notfoundthrow',
     component: Page404,
     meta: {
       requiresAuth: true,
