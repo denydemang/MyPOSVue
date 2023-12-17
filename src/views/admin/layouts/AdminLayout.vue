@@ -11,7 +11,6 @@ const isLoading = ref(true);
 
 onBeforeMount(async () => {
   const isAuthenticated = await checkuser();
-  // console.log(isAuthenticated);
   if (!isAuthenticated) {
     window.location.href = '/login';
   } else {

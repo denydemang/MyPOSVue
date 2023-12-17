@@ -88,7 +88,6 @@ const getCategory = async () => {
     let totalAllRows = responseData.data.meta.total;
     total_rows.value = totalAllRows;
     rows.value = dataCategory;
-    console.log(dataCategory);
   } catch (error) {
     const exception = new ex(error);
     exception.showError();
