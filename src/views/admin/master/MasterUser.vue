@@ -81,7 +81,7 @@ const clearData = () => {
 
 const getApiRole = async () => {
   try {
-    const response = await axios.get(`${apiurl}/api/roles/${branch}`, {
+    const response = await axios.get(`${apiurl}/api/roles/list/${branch}?perpage=1000`, {
       headers: {
         Authorization: token
       }
@@ -171,7 +171,7 @@ const populateModal = (data) => {
         <span class=""><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'masteruser' }">masteruser</router-link> </span>
       </div>
       <div class="row">
-        <div class="col-lg-6">
+        <div class="col-lg-8">
           <button class="btn btn-primary mt-2 mb-3" @click="addNewView('Add New User')" data-toggle="modal" data-target="#modalUser"><i class="fas fa-plus"></i> Add New</button>
           <UserTable ref="MyChild" @dataUsers="populateModal" />
         </div>

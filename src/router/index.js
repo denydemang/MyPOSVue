@@ -7,6 +7,7 @@ import MasterProduct from '@/views/admin/master/MasterProduct.vue';
 import MasterProductManage from '@/views/admin/master/MasterProductManage.vue';
 import MasterUser from '@/views/admin/master/MasterUser.vue';
 import RoleUser from '@/views/admin/master/RoleUser.vue';
+import RoleUserManage from '@/views/admin/master/RoleUserManage.vue';
 import MasterSupplier from '@/views/admin/transaction/purchase/MasterSupplier.vue';
 import Purchase from '@/views/admin/transaction/purchase/Purchase.vue';
 import PurchaseReturn from '@/views/admin/transaction/purchase/PurchaseReturn.vue';
@@ -49,7 +50,7 @@ const routes = [
         name: 'admin',
         component: DashboardView,
         meta: {
-          requiresAuth: true,
+          
           title: 'ADMIN DASHBOARD'
         }
       },
@@ -58,7 +59,7 @@ const routes = [
         name: 'mastercategory',
         component: MasterCategory,
         meta: {
-          requiresAuth: true,
+          
           title: 'MASTER CATEGORY'
         }
       },
@@ -67,7 +68,7 @@ const routes = [
         name: 'masterproduct',
         component: MasterProduct,
         meta: {
-          requiresAuth: true,
+          
           title: 'MASTER PRODUCT/ITEM'
         }
       },
@@ -76,7 +77,7 @@ const routes = [
         name: 'masterproductcreate',
         component: MasterProductManage,
         meta: {
-          requiresAuth: true,
+          
           title: 'ADD MASTER PRODUCT/ITEM'
         }
       },
@@ -85,7 +86,7 @@ const routes = [
         name: 'masterproductedit',
         component: MasterProductManage,
         meta: {
-          requiresAuth: true,
+          
           title: 'EDIT MASTER PRODUCT/ITEM'
         }
       },
@@ -94,7 +95,7 @@ const routes = [
         name: 'masteruser',
         component: MasterUser,
         meta: {
-          requiresAuth: true,
+          
           title: 'MASTER USER'
         }
       },
@@ -103,8 +104,24 @@ const routes = [
         name: 'roleuser',
         component: RoleUser,
         meta: {
-          requiresAuth: true,
+          
           title: 'ROLE USER'
+        }
+      },
+      {
+        path: 'roleuser/create',
+        name: 'roleusercreate',
+        component: RoleUserManage,
+        meta: {
+          title: 'ROLE USER CREATE'
+        }
+      },
+      {
+        path: 'roleuser/edit',
+        name: 'roleuseredit',
+        component: RoleUserManage,
+        meta: {
+          title: 'ROLE USER EDIT'
         }
       },
       {
@@ -112,7 +129,7 @@ const routes = [
         name: 'mastersupplier',
         component: MasterSupplier,
         meta: {
-          requiresAuth: true,
+          
           title: 'MASTER SUPPLIER'
         }
       },
@@ -121,7 +138,7 @@ const routes = [
         name: 'purchase',
         component: Purchase,
         meta: {
-          requiresAuth: true,
+          
           title: 'PURCHASE TRANSACTION'
         }
       },
@@ -130,7 +147,7 @@ const routes = [
         name: 'purchasereturn',
         component: PurchaseReturn,
         meta: {
-          requiresAuth: true,
+          
           title: 'PURCHASE RETURN TRANSACTION'
         }
       },
@@ -139,7 +156,7 @@ const routes = [
         name: 'mastercustomer',
         component: MasterCustomer,
         meta: {
-          requiresAuth: true,
+          
           title: 'MASTER CUSTOMER'
         }
       },
@@ -148,7 +165,7 @@ const routes = [
         name: 'sales',
         component: Sales,
         meta: {
-          requiresAuth: true,
+          
           title: 'SALES TRANSACTION'
         }
       },
@@ -157,7 +174,7 @@ const routes = [
         name: 'salesreturn',
         component: SalesReturn,
         meta: {
-          requiresAuth: true,
+          
           title: 'SALES RETURN TRANSACTION'
         }
       },
@@ -166,7 +183,7 @@ const routes = [
         name: 'grn',
         component: GRN,
         meta: {
-          requiresAuth: true,
+          
           title: 'GOODS RECEIVES NOTE'
         }
       },
@@ -175,7 +192,7 @@ const routes = [
         name: 'inoutitem',
         component: INOUTITEM,
         meta: {
-          requiresAuth: true,
+          
           title: 'IN OUT ITEM TRANSACTION'
         }
       }
@@ -186,7 +203,7 @@ const routes = [
     name: 'notfound',
     component: Page404,
     meta: {
-      requiresAuth: true,
+      
       title: '404 NOT FOUND'
     }
   },
@@ -195,7 +212,7 @@ const routes = [
     name: 'notfoundthrow',
     component: Page404,
     meta: {
-      requiresAuth: true,
+      
       title: '404 NOT FOUND'
     }
   }

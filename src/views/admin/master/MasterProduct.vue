@@ -36,7 +36,7 @@ onBeforeMount(() => {
       </div>
       <div class="row">
         <div class="col-lg-12" style="min-height: 100vh">
-          <button class="btn btn-primary mt-2 mb-3" @click="addNewView('Add New Category')"><i class="fas fa-plus"></i> Add New</button>
+          <button class="btn btn-primary mt-2 mb-3" @click="addNewView()"><i class="fas fa-plus"></i> Add New</button>
           <ProductTable />
         </div>
       </div>

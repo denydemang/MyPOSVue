@@ -86,6 +86,8 @@ const ismasterproductedit = ref(false);
 const ismasterproductcreate = ref(false);
 const ismasteruser = ref(false);
 const isroleuser = ref(false);
+const isroleusercreate = ref(false);
+const isroleuseredit = ref(false);
 const ismastersupplier = ref(false);
 const ispurchase = ref(false);
 const ispurchasereturn = ref(false);
@@ -125,7 +127,7 @@ const isActive = () => {
   } else {
     ismasterproductedit.value = false;
   }
-  if (route.name != 'masterproduct' && route.name != 'mastercategory' && route.name != 'masterproductcreate' && route.name != 'masterproductedit') {
+  if (!ismastercategory.value && !ismasterproduct.value && !ismasterproductcreate.value && !ismasterproductedit.value) {
     $('.dropdownproductmanagement').stop(true, true).slideUp();
   }
   // MASTER MENU - USER MANAGEMENT
@@ -139,7 +141,17 @@ const isActive = () => {
   } else {
     isroleuser.value = false;
   }
-  if (route.name != 'masteruser' && route.name != 'roleuser') {
+  if (route.name == 'roleusercreate') {
+    isroleusercreate.value = true;
+  } else {
+    isroleusercreate.value = false;
+  }
+  if (route.name == 'roleuseredit') {
+    isroleuseredit.value = true;
+  } else {
+    isroleuseredit.value = false;
+  }
+  if (!ismasteruser.value && !isroleuser.value && !isroleusercreate.value && !isroleuseredit.value) {
     $('.dropdownusermanagement').stop(true, true).slideUp();
   }
 
@@ -163,7 +175,7 @@ const isActive = () => {
   } else {
     ispurchasereturn.value = false;
   }
-  if (route.name != 'mastersupplier' && route.name != 'purchase' && route.name != 'purchasereturn') {
+  if (!ismastersupplier.value && !ispurchase.value && !ispurchasereturn.value) {
     $('.dropdwonpurchasetrans').stop(true, true).slideUp();
   }
   // SALES TRANSACTION
@@ -185,7 +197,7 @@ const isActive = () => {
   } else {
     issalesreturn.value = false;
   }
-  if (route.name != 'mastercustomer' && route.name != 'sales' && route.name != 'salesreturn') {
+  if (!ismastercustomer.value && !issales.value && !issalesreturn.value) {
     $('.dropdwonsalestrans').stop(true, true).slideUp();
   }
 
@@ -246,11 +258,13 @@ onMounted(() => {
             <!-- <li><a class="nav-link" href="layout-top-navigation.html">Top Navigation</a></li> -->
           </ul>
         </li>
-        <li class="nav-item dropdown" :class="{ active: ismasteruser | isroleuser }" v-if="viewmenu.master_user || viewmenu.role_user">
+        <li class="nav-item dropdown" :class="{ active: ismasteruser || isroleuser || isroleusercreate || isroleuseredit }" v-if="viewmenu.master_user || viewmenu.role_user">
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-user-friends"></i> <span>User Management</span></a>
           <ul class="dropdown-menu dropdownusermanagement">
             <li :class="{ active: ismasteruser }" v-if="viewmenu.master_user"><router-link class="nav-link" :to="{ name: 'masteruser' }">Master User</router-link></li>
-            <li :class="{ active: isroleuser }" v-if="viewmenu.role_user"><router-link class="nav-link" :to="{ name: 'roleuser' }">Role User</router-link></li>
+            <li :class="{ active: isroleuser || isroleusercreate || isroleuseredit }" v-if="viewmenu.role_user">
+              <router-link class="nav-link" :to="{ name: 'roleuser' }">Role User</router-link>
+            </li>
           </ul>
         </li>
         <li
