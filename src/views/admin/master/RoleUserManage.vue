@@ -3,13 +3,20 @@ import { onBeforeMount, onMounted, reactive, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import checkview from '@/access.js';
 import axios from 'axios';
+import ex from '@/exception.js';
+import { showerror } from '@/jqueryconfirm.js';
 
 const router = useRouter();
 const routes = useRoute();
 const apiUrl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
+const ispostingdata = ref(false);
 const token = localStorage.getItem('token');
 const namessession = ref('');
+const inputdata = reactive({
+  rolename: ''
+});
+const invalidSubmit = ref('');
 const module = ref([]);
 
 const allxView = ref(false);
@@ -26,10 +33,10 @@ onBeforeMount(async () => {
   }
   if (routes.name == 'roleusercreate') {
     namessession.value = 'Add New';
+    getApiModule();
   } else if (routes.name == 'roleuserupdate') {
     namessession.value = 'Edit';
   }
-  getApiModule();
 });
 
 const ischeckedforallspecificmodule = () => {
@@ -112,7 +119,74 @@ const groupByName = (data) => {
 
   return resultArray;
 };
+const manageerror400 = (error) => {
+  if (error.response.data.errors.hasOwnProperty('name')) {
+    invalidSubmit.value = 'Field Role Name Cannot Be Empty';
+  } else {
+    invalidSubmit.value = '';
+  }
+};
+const manageerror500 = (error) => {
+  if (error.response.data.errors.general[0].includes('Duplicate entry')) {
+    invalidSubmit.value = 'The Role Name Already Exists';
+  } else {
+    invalidSubmit.value = '';
+    showerror('You Have An Issue With Internal Server (Status 500)');
+  }
+};
 
+const joindetail = (dataitem, rolename, branch) => {
+  const datajoin = {
+    branchcode: branch,
+    name: rolename,
+    access: []
+  };
+  dataitem.forEach((item) => {
+    item.detail.forEach((itemdetail) => {
+      const dataaccess = {
+        id_module: itemdetail.id,
+        xView: itemdetail.xView,
+        xUpdate: itemdetail.xUpdate,
+        xDelete: itemdetail.xDelete,
+        xApprove: itemdetail.xApprove,
+        xCreate: itemdetail.xCreate
+      };
+      datajoin.access.push(dataaccess);
+    });
+  });
+
+  return datajoin;
+};
+const postApiModule = async () => {
+  ispostingdata.value = true;
+  try {
+    const postData = joindetail(module.value, inputdata.rolename, branch);
+
+    await axios.post(`${apiUrl}/api/roles`, postData, {
+      headers: {
+        Authorization: token
+      }
+    });
+    ispostingdata.value = false;
+    invalidSubmit.value = '';
+    sessionStorage.setItem('success', `Successfully Created New Role (${inputdata.rolename})`);
+    router.push({
+      name: 'roleuser'
+    });
+  } catch (error) {
+    ispostingdata.value = false;
+    const myexception = new ex(error);
+    myexception.func400 = manageerror400;
+    myexception.func500 = manageerror500;
+    myexception.showError();
+  }
+};
+const cancelInput = () => {
+  console.log('ok');
+  router.push({
+    name: 'roleuser'
+  });
+};
 const getApiModule = async () => {
   try {
     const response = await axios.get(`${apiUrl}/api/modules/list`, {
@@ -125,13 +199,10 @@ const getApiModule = async () => {
     module.value = groupedData;
     ischeckedforallspecificmodule();
   } catch (error) {
-    console.log(error);
+    const myexception = new ex(error);
+    myexception.showError();
   }
 };
-const validation = ref({
-  name: ''
-});
-
 const changeaccess = (iddetail, accessname, e) => {
   const status = e.target.checked;
   if (iddetail == 'all') {
@@ -234,12 +305,17 @@ const changeaccess = (iddetail, accessname, e) => {
       <div class="row" style="max-width: 1900px">
         <div class="col-lg-12">
           <div style="text-align: right">
-            <button class="btn btn-danger mr-2" style="font-size: 16px"><i class="fas fa-window-close" style="font-size: 16px"></i> Cancel</button>
-            <button class="btn btn-primary m-0" style="font-size: 16px"><i class="fas fa-save" style="font-size: 16px"></i> Save Change</button>
+            <button class="btn btn-sm btn-danger mr-2" style="font-size: 12px" @click="cancelInput()"><i class="fas fa-window-close" style="font-size: 12px"></i> Cancel</button>
+            <button class="btn btn-sm btn-primary m-0" :disabled="ispostingdata" @click="postApiModule()" style="font-size: 12px">
+              <i class="fas fa-save mr-1" style="font-size: 12px"></i>
+              <span v-if="ispostingdata">Saving ...</span>
+              <span v-else>Save Change</span>
+            </button>
           </div>
           <div class="form-group col-lg-4">
             <label><b style="font-size: 18px">Role Name</b></label>
-            <input type="text" class="form-control" style="font-size: 18px" />
+            <input type="text" class="form-control" :class="{ 'is-invalid': invalidSubmit != '' }" v-model="inputdata.rolename" style="font-size: 18px" />
+            <div class="invalid-feedback">{{ invalidSubmit }}</div>
           </div>
           <div class="table-responsive col-lg-12" style="max-height: 60vh; overflow-y: scroll">
             <table class="table table-bordered">

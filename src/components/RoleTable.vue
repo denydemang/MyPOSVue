@@ -60,7 +60,7 @@ const cols =
 
 const manageerror = (error, name) => {
   if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-    showerror('User ' + name + ' Already Used In Transaction Cannot Be Deleted');
+    showerror('Role ' + name + ' Already Used In Master User Cannot Be Deleted');
   } else {
     showerror('ERROR!!! Internal Server Error');
   }
@@ -79,7 +79,6 @@ const getRoles = async () => {
 
     // Menambahkan properti 'no' dengan nilai increment pada setiap objek
     let dataRoles = responseData.data.data;
-    console.log(dataRoles);
     dataRoles.forEach((obj, key) => {
       obj.no = counter++;
     });

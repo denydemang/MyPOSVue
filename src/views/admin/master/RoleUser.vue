@@ -1,8 +1,9 @@
 <script setup>
-import { onBeforeMount } from 'vue';
+import { onBeforeMount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import checkview from '@/access.js';
 import RoleTable from '@/components/RoleTable.vue';
+import { iziSuccess } from '@/izitoast.js';
 
 const router = useRouter();
 onBeforeMount(() => {
@@ -17,6 +18,12 @@ const addNewView = () => {
     name: 'roleusercreate'
   });
 };
+onMounted(() => {
+  if (sessionStorage.getItem('success')) {
+    iziSuccess('success', sessionStorage.getItem('success'));
+    sessionStorage.removeItem('success');
+  }
+});
 </script>
 <template>
   <!-- Main Content -->
