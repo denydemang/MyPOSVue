@@ -33,6 +33,8 @@ import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import axios from 'axios';
 import ex from '@/exception.js';
+import enc from '@/myencription.js';
+import router from '@/router';
 
 onMounted(() => {
   getRoles();
@@ -68,7 +70,7 @@ const manageerror = (error, name) => {
 const getRoles = async () => {
   try {
     loading.value = true;
-    const responseData = await axios.get(`${apiurl}/api/roles/list/${branch}`, {
+    const responseData = await axios.get(`${apiurl}/api/roles/list/${branch}?perpage=${params.pagesize}&page=${params.current_page}`, {
       headers: {
         Authorization: token
       }
@@ -119,15 +121,13 @@ const changeServer = (data) => {
   params.pagesize = data.pagesize;
   getRoles();
 };
-// const viewEdit = (data) => {
-//   emit('dataUsers', {
-//     id: data.id,
-//     username: data.username,
-//     id_role: data.id_role,
-//     name: data.name
-//   });
-//   // alert('View data \n' + data.id + ', ' + data.name);
-// };
+const viewEdit = (data) => {
+  sessionStorage.setItem('idparams', enc.encrypt(data.id));
+  router.push({
+    name: 'roleuseredit'
+  });
+  // alert('View data \n' + data.id + ', ' + data.name);
+};
 const viewDelete = (data) => {
   showconfirmdelete(data, deleteRoles, 'Roles With Name');
 };

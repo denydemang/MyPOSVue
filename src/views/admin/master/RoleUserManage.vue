@@ -1,10 +1,11 @@
 <script setup>
-import { onBeforeMount, onMounted, reactive, ref } from 'vue';
+import { onBeforeMount, onUnmounted, reactive, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import checkview from '@/access.js';
 import axios from 'axios';
 import ex from '@/exception.js';
 import { showerror } from '@/jqueryconfirm.js';
+import enc from '@/myencription.js';
 
 const router = useRouter();
 const routes = useRoute();
@@ -14,7 +15,8 @@ const ispostingdata = ref(false);
 const token = localStorage.getItem('token');
 const namessession = ref('');
 const inputdata = reactive({
-  rolename: ''
+  rolename: '',
+  id: null
 });
 const invalidSubmit = ref('');
 const module = ref([]);
@@ -34,10 +36,46 @@ onBeforeMount(async () => {
   if (routes.name == 'roleusercreate') {
     namessession.value = 'Add New';
     getApiModule();
-  } else if (routes.name == 'roleuserupdate') {
+  } else if (routes.name == 'roleuseredit') {
+    // console.log(enc.decrypt(sessionStorage.getItem('idparams')));
     namessession.value = 'Edit';
+    if ((await getspecificrole()) == false) {
+      router.push({
+        name: 'roleuser'
+      });
+    }
   }
 });
+onUnmounted(() => {
+  sessionStorage.removeItem('idparams');
+});
+
+const getspecificrole = async () => {
+  try {
+    let paramsid = sessionStorage.getItem('idparams');
+    if (!paramsid || paramsid == null || paramsid == '') {
+      return false;
+    }
+    paramsid = enc.decrypt(paramsid);
+    if (!paramsid || paramsid == null || paramsid == '') {
+      return false;
+    }
+    const response = await axios.get(`${apiUrl}/api/roles/detail/${branch}/${paramsid}`, {
+      headers: {
+        Authorization: token
+      }
+    });
+    const dataRole = response.data.data;
+    inputdata.rolename = dataRole.name;
+    inputdata.id = dataRole.id;
+    module.value = groupByName(dataRole.access, 1);
+    ischeckedforallspecificmodule();
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
 
 const ischeckedforallspecificmodule = () => {
   let isallxview = true;
@@ -73,47 +111,75 @@ const ischeckedforallspecificmodule = () => {
   allxCreate.value = isallxcreate;
 };
 
-const groupByName = (data) => {
+const groupByName = (data, status = 0) => {
   const mappedData = {};
 
-  data.forEach((item) => {
-    const groupName = item.name;
-    let detailItem = {};
-    if (item.name == 'dasboard') {
-      detailItem = {
-        id: item.id,
-        sub_name: item.sub_name,
-        description: item.description,
-        is_active: item.is_active,
-        xView: true,
-        xUpdate: true,
-        xDelete: true,
-        xApprove: true,
-        xCreate: true
-      };
-    } else {
-      detailItem = {
-        id: item.id,
-        sub_name: item.sub_name,
-        description: item.description,
-        is_active: item.is_active,
-        xView: false,
-        xUpdate: false,
-        xDelete: false,
-        xApprove: false,
-        xCreate: false
-      };
-    }
+  //Jika session adalah add new
+  if (status == 0) {
+    data.forEach((item) => {
+      const groupName = item.name;
+      let detailItem = {};
+      if (item.name == 'dasboard') {
+        detailItem = {
+          id: item.id,
+          sub_name: item.sub_name,
+          description: item.description,
+          is_active: item.is_active,
+          xView: true,
+          xUpdate: true,
+          xDelete: true,
+          xApprove: true,
+          xCreate: true
+        };
+      } else {
+        detailItem = {
+          id: item.id,
+          sub_name: item.sub_name,
+          description: item.description,
+          is_active: item.is_active,
+          xView: false,
+          xUpdate: false,
+          xDelete: false,
+          xApprove: false,
+          xCreate: false
+        };
+      }
 
-    if (!mappedData[groupName]) {
-      mappedData[groupName] = {
-        name: groupName,
-        detail: [detailItem]
+      if (!mappedData[groupName]) {
+        mappedData[groupName] = {
+          name: groupName,
+          detail: [detailItem]
+        };
+      } else {
+        mappedData[groupName].detail.push(detailItem);
+      }
+    });
+    // jika session adalah edit
+  } else {
+    data.forEach((item) => {
+      const groupName = item.module_name;
+      let detailItem = {};
+      detailItem = {
+        id: item.id_module,
+        sub_name: item.module_sub_name,
+        description: '',
+        is_active: true,
+        xView: item.xView,
+        xUpdate: item.xUpdate,
+        xDelete: item.xDelete,
+        xApprove: item.xApprove,
+        xCreate: item.xCreate
       };
-    } else {
-      mappedData[groupName].detail.push(detailItem);
-    }
-  });
+      if (!mappedData[groupName]) {
+        mappedData[groupName] = {
+          name: groupName,
+          detail: [detailItem]
+        };
+      } else {
+        mappedData[groupName].detail.push(detailItem);
+      }
+    });
+  }
   //   Membuat object menjadi array
   const resultArray = Object.values(mappedData);
 
@@ -157,6 +223,7 @@ const joindetail = (dataitem, rolename, branch) => {
 
   return datajoin;
 };
+
 const postApiModule = async () => {
   ispostingdata.value = true;
   try {
@@ -181,8 +248,31 @@ const postApiModule = async () => {
     myexception.showError();
   }
 };
+const putApiModule = async () => {
+  ispostingdata.value = true;
+  try {
+    const postData = joindetail(module.value, inputdata.rolename, branch);
+
+    await axios.put(`${apiUrl}/api/roles/${branch}/${inputdata.id}`, postData, {
+      headers: {
+        Authorization: token
+      }
+    });
+    ispostingdata.value = false;
+    invalidSubmit.value = '';
+    sessionStorage.setItem('success', `Successfully Updated Role (${inputdata.rolename})`);
+    router.push({
+      name: 'roleuser'
+    });
+  } catch (error) {
+    ispostingdata.value = false;
+    const myexception = new ex(error);
+    myexception.func400 = manageerror400;
+    myexception.func500 = manageerror500;
+    myexception.showError();
+  }
+};
 const cancelInput = () => {
-  console.log('ok');
   router.push({
     name: 'roleuser'
   });
@@ -306,10 +396,15 @@ const changeaccess = (iddetail, accessname, e) => {
         <div class="col-lg-12">
           <div style="text-align: right">
             <button class="btn btn-sm btn-danger mr-2" style="font-size: 12px" @click="cancelInput()"><i class="fas fa-window-close" style="font-size: 12px"></i> Cancel</button>
-            <button class="btn btn-sm btn-primary m-0" :disabled="ispostingdata" @click="postApiModule()" style="font-size: 12px">
+            <button class="btn btn-sm btn-primary m-0" v-if="namessession == 'Add New'" :disabled="ispostingdata" @click="postApiModule()" style="font-size: 12px">
               <i class="fas fa-save mr-1" style="font-size: 12px"></i>
               <span v-if="ispostingdata">Saving ...</span>
-              <span v-else>Save Change</span>
+              <span v-else> Save New Role </span>
+            </button>
+            <button class="btn btn-sm btn-primary m-0" v-else :disabled="ispostingdata" @click="putApiModule()" style="font-size: 12px">
+              <i class="fas fa-save mr-1" style="font-size: 12px"></i>
+              <span v-if="ispostingdata">Saving ...</span>
+              <span v-else> Save Change </span>
             </button>
           </div>
           <div class="form-group col-lg-4">
