@@ -79,11 +79,14 @@ const filterProduct = async () => {
     loading.value = true;
     let convertsearch = '';
     convertsearch = params.search.replace(/\s/g, '%');
-    const responseData = await axios.get(`${apiurl}/api/products/${branch}/search?key=${convertsearch}&perpage=${params.pagesize}&page=${params.current_page}`, {
-      headers: {
-        Authorization: token
+    const responseData = await axios.get(
+      `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}`,
+      {
+        headers: {
+          Authorization: token
+        }
       }
-    });
+    );
     let dataProduct = responseData.data.data;
     let totalAllRows = responseData.data.meta.total;
     dataProduct.map((item) => {
