@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import encryption from '@/myencription.js';
 import axios from 'axios';
 const name = ref(encryption.decrypt(localStorage.getItem('name'), ''));
+const username = ref(encryption.decrypt(localStorage.getItem('username'), ''));
 const token = localStorage.getItem('token');
 const apiUrl = process.env.VUE_APP_API_URL;
 
@@ -219,7 +220,7 @@ const logout = async () => {
       <li class="dropdown">
         <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
           <img alt="image" src="/assets/img/avatar/avatar-1.png" class="rounded-circle mr-1" />
-          <div class="d-sm-none d-lg-inline-block">{{ name }}</div></a
+          <div class="d-sm-none d-lg-inline-block">{{ username }}</div></a
         >
         <div class="dropdown-menu dropdown-menu-right">
           <div class="dropdown-title">{{ name }}</div>
