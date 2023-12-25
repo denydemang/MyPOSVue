@@ -127,13 +127,7 @@ const changeServer = (data) => {
   params.search = data.search;
   params.orderby = data.sort_column;
   params.ascdesc = data.sort_direction;
-  if (data.change_type === 'sort') {
-    getApiProduct();
-  } else if (data.change_type === 'search') {
-    filterProduct();
-  } else {
-    getApiProduct();
-  }
+  filterProduct();
 };
 const viewDelete = (data) => {
   showconfirmdelete(data, deleteProduct, 'Product');

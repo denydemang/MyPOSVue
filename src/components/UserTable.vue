@@ -220,11 +220,11 @@ const changeServer = (data) => {
   params.current_page = data.current_page;
   params.pagesize = data.pagesize;
   params.search = data.search;
-  if (data.change_type === 'search') {
-    filterCategory();
-  } else {
-    getUsers();
-  }
+  // if (data.change_type === 'search') {
+  //   filterCategory();
+  // } else {
+  filterCategory();
+  // }
 };
 const viewEdit = (data) => {
   emit('dataUsers', {

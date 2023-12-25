@@ -20,7 +20,7 @@
     >
       <template #actions="data">
         <div>
-          <button type="button" data-toggle="modal" data-target="#modalCategory" class="btn btn-success btn-sm" @click="viewEdit(data.value)">
+          <button type="button" data-toggle="modal" data-target="#modalSupplier" class="btn btn-success btn-sm" @click="viewEdit(data.value)">
             <i class="fas fa-edit"></i> Edit
           </button>
           <button type="button" class="btn btn-danger btn-sm" @click="viewDelete(data.value)"><i class="fas fa-trash"></i> Delete</button>
@@ -31,17 +31,17 @@
 </template>
 <script setup>
 import { ref, onMounted, reactive, defineExpose, defineEmits } from 'vue';
-import { iziInfo, iziError, iziSuccess, iziWarning } from '@/izitoast.js';
+import { iziSuccess } from '@/izitoast.js';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import axios from 'axios';
 import ex from '@/exception.js';
 onMounted(() => {
-  getCategory();
+  getSupplier();
 });
 
-const emit = defineEmits(['dataCategory']);
+const emit = defineEmits(['dataSupplier']);
 
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
@@ -55,7 +55,7 @@ const params = reactive({ current_page: 1, pagesize: 10, search: '' });
 const rows = ref(null);
 const manageerror = (error, name) => {
   if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-    showerror('Category ' + name + ' Already Used In Transaction Cannot Be Deleted');
+    showerror('Supplier ' + name + ' Already Used In Transaction Cannot Be Deleted');
   } else {
     showerror('ERROR!!! Internal Server Error');
   }
@@ -63,16 +63,18 @@ const manageerror = (error, name) => {
 const cols =
   ref([
     { field: 'no', title: '#', isUnique: true },
-    { field: 'id', title: 'ID', isUnique: true, hide: true },
-    { field: 'name', title: 'Name', sort: true },
+    { field: 'number_id', title: 'ID Number', isUnique: true },
+    { field: 'name', title: 'Supplier Name' },
+    { field: 'address', title: 'Address' },
+    { field: 'contact', title: 'Contact' },
     { field: 'actions', title: 'Actions' }
   ]) || [];
 
-const getCategory = async () => {
+const getSupplier = async () => {
   try {
     loading.value = true;
 
-    const responseData = await axios.get(`${apiurl}/api/categories/list/${params.pagesize}/${branch}?page=${params.current_page}`, {
+    const responseData = await axios.get(`${apiurl}/api/suppliers/list/${branch}?page=${params.current_page}&perpage=${params.pagesize}`, {
       headers: {
         Authorization: token
       }
@@ -81,13 +83,13 @@ const getCategory = async () => {
     let counter = params.current_page * params.pagesize - params.pagesize + 1;
 
     // Menambahkan properti 'no' dengan nilai increment pada setiap objek
-    let dataCategory = responseData.data.data;
-    dataCategory.forEach((obj, key) => {
+    let dataSupplier = responseData.data.data;
+    dataSupplier.forEach((obj, key) => {
       obj.no = counter++;
     });
     let totalAllRows = responseData.data.meta.total;
     total_rows.value = totalAllRows;
-    rows.value = dataCategory;
+    rows.value = dataSupplier;
   } catch (error) {
     const exception = new ex(error);
     exception.showError();
@@ -96,17 +98,17 @@ const getCategory = async () => {
   loading.value = false;
 };
 
-const deleteCategory = async (id, name) => {
+const deleteSupplier = async (id, name) => {
   try {
     isdeleting.value = true;
-    await axios.delete(`${apiurl}/api/categories/${id}`, {
+    await axios.delete(`${apiurl}/api/suppliers/${id}`, {
       headers: {
         Authorization: token
       }
     });
     isdeleting.value = false;
-    getCategory();
-    iziSuccess('Success', 'Successfully Deleted Category ' + name);
+    filterSupplier();
+    iziSuccess('Success', 'Successfully Deleted Supplier ' + name);
   } catch (error) {
     isdeleting.value = false;
     const exception = new ex(error);
@@ -116,11 +118,11 @@ const deleteCategory = async (id, name) => {
   }
 };
 
-const filterCategory = async () => {
+const filterSupplier = async () => {
   try {
     loading.value = true;
 
-    const responseData = await axios.get(`${apiurl}/api/categories/${branch}/search?key=${params.search}&perpage=${params.pagesize}&page=${params.current_page}`, {
+    const responseData = await axios.get(`${apiurl}/api/suppliers/${branch}/search?key=${params.search}&perpage=${params.pagesize}&page=${params.current_page}`, {
       headers: {
         Authorization: token
       }
@@ -149,27 +151,24 @@ const changeServer = (data) => {
   params.current_page = data.current_page;
   params.pagesize = data.pagesize;
   params.search = data.search;
-  // if (data.change_type === 'search') {
-  filterCategory();
-  // } else {
-  //   getCategory();
-  // }
+  filterSupplier();
 };
 const viewEdit = (data) => {
-  emit('dataCategory', [
-    {
-      id: data.id,
-      name: data.name
-    }
-  ]);
+  emit('dataSupplier', {
+    id: data.id,
+    name: data.name,
+    number_id: data.number_id,
+    address: data.address,
+    contact: data.contact
+  });
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteCategory, 'Category');
+  showconfirmdelete(data, deleteSupplier, 'Supplier');
 };
-//mengekspose function agar function getCategory bisa di jalankan di component parent
+//mengekspose function agar function getSupplier bisa di jalankan di component parent
 defineExpose({
-  getCategory
+  getSupplier
 });
 </script>
 <style scoped>
