@@ -18,6 +18,7 @@ import GRN from '@/views/admin/inventory/GRN.vue';
 import INOUTITEM from '@/views/admin/inventory/INOUTITEM.vue';
 import Page404 from '@/views/Page404.vue';
 import CompanyProfile from '@/views/CompanyProfile.vue'
+import CompanyProfileAdmin from '@/views/admin/settings/CompanyProfiles.vue'
 import Login from '@/views/Login.vue';
 
 
@@ -195,6 +196,15 @@ const routes = [
         meta: {
           
           title: 'IN OUT ITEM TRANSACTION'
+        }
+      },
+      {
+        path: 'companyprofile',
+        name: 'companyprofileadmin',
+        component: CompanyProfileAdmin,
+        meta: {
+          
+          title: 'EDIT COMPANY PROFILES'
         }
       }
     ]

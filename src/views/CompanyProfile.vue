@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios';
 import { ref, onBeforeMount, reactive } from 'vue';
+import myencription from '@/myencription';
 import checkcompany from '@/company.js';
 import ex from '@/exception.js';
 const apiurl = process.env.VUE_APP_API_URL;
@@ -63,13 +64,15 @@ const postDATAAPI = async () => {
   isPostingData.value = true;
   try {
     clearErrorMessage();
-    postDATA.app_name = postDATA.app_name.toUpperCase();
-    postDATA.profile_name = postDATA.profile_name.toUpperCase();
+    postDATA.app_name = postDATA.app_name ? postDATA.app_name.toUpperCase() : null;
+    postDATA.profile_name = postDATA.profile_name ? postDATA.profile_name.toUpperCase() : null;
     const responseData = await axios.post(`${apiurl}/api/companyprofiles`, postDATA, {
       headers: {
         Authorization: token
       }
     });
+    const dataCompany = responseData.data.data;
+    localStorage.setItem('app_name', myencription.encrypt(dataCompany.app_name));
     window.location.href = '/admin';
   } catch (error) {
     console.log(error);

@@ -1,11 +1,16 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeMount } from 'vue';
+import { ref, watch, onMounted, onBeforeMount, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
+import axios from 'axios';
 import myenc from '@/myencription.js';
 import jquery from 'jquery';
+import myencription from '@/myencription.js';
 const $ = jquery;
 const route = useRoute();
-
+const branch = process.env.VUE_APP_BRANCH;
+const apiurl = process.env.VUE_APP_API_URL;
+const apptitle = ref('');
+const appinitialtitle = ref('');
 const viewmenu = ref({
   dashboard: 0,
   master_category: 0,
@@ -103,7 +108,8 @@ const issales = ref(false);
 const issalesreturn = ref(false);
 const isgrn = ref(false);
 const isinoutitem = ref(false);
-
+const iscompanyprofile = ref(false);
+let intervalId = null;
 const isActive = () => {
   // ADMIN MENU/DASHBOARD
   if (route.name == 'admin') {
@@ -221,8 +227,49 @@ const isActive = () => {
   } else {
     isinoutitem.value = false;
   }
-};
 
+  // MENU SETTINGS
+  // COMPANY PROFILES
+  if (route.name == 'companyprofileadmin') {
+    iscompanyprofile.value = true;
+  } else {
+    iscompanyprofile.value = false;
+  }
+};
+const getInitials = (text) => {
+  let joinstring = '';
+  const words = text.split(' ');
+  if (words.length > 1) {
+    const initials = words.map((word) => word[0]);
+    joinstring = initials.join('');
+  } else {
+    if (text.length > 1) {
+      joinstring = text.substring(0, 2);
+    } else {
+      joinstring = text;
+    }
+  }
+  appinitialtitle.value = joinstring;
+};
+const populateappname = async () => {
+  if (localStorage.getItem('app_name')) {
+    const decrypt = myencription.decrypt(localStorage.getItem('app_name'));
+    if (decrypt) {
+      apptitle.value = decrypt.toUpperCase();
+    } else {
+      apptitle.value = 'MY POS VUE';
+    }
+  } else {
+    try {
+      const responseData = await axios.get(`${apiurl}/api/companyprofiles/detail/${branch}`);
+      const appname = responseData.data.data.app_name;
+      apptitle.value = appname.toUpperCase();
+      localStorage.setItem('app_name', myencription.encrypt(apptitle.value));
+    } catch (error) {
+      apptitle.value = 'MY POS VUE';
+    }
+  }
+};
 //memamntau perubahan nama route yang sedang aktif
 watch(
   () => route.name,
@@ -230,18 +277,26 @@ watch(
     isActive();
   }
 );
-onMounted(() => {
+onMounted(async () => {
+  populateappname();
+  intervalId = setInterval(() => {
+    populateappname();
+    getInitials(apptitle.value);
+  }, 2000);
   isActive();
+});
+onBeforeUnmount(async () => {
+  clearInterval(intervalId);
 });
 </script>
 <template>
   <div class="main-sidebar sidebar-style-2">
     <aside id="sidebar-wrapper">
       <div class="sidebar-brand">
-        <a href="index.html"></a>
+        <router-link :to="{ name: 'admin' }">{{ apptitle }}</router-link>
       </div>
       <div class="sidebar-brand sidebar-brand-sm">
-        <a href="index.html">St</a>
+        <router-link :to="{ name: 'admin' }">{{ appinitialtitle }}</router-link>
       </div>
       <ul class="sidebar-menu">
         <li class="menu-header" v-if="viewmenu.dashboard">Dashboard</li>
@@ -312,6 +367,10 @@ onMounted(() => {
         </li>
         <li class="nav-item" :class="{ active: isinoutitem }" v-if="viewmenu.stock">
           <RouterLink :to="{ name: 'inoutitem' }" class="nav-link"><i class="far fa-user"></i> <span>IN OUT PRODUCT/ITEM</span></RouterLink>
+        </li>
+        <li class="menu-header" v-if="viewmenu.company_profiles">Settings</li>
+        <li class="nav-item" :class="{ active: iscompanyprofile }" v-if="viewmenu.company_profiles">
+          <RouterLink :to="{ name: 'companyprofileadmin' }" class="nav-link"><i class="far fa-user"></i> <span>Company Profiles</span></RouterLink>
         </li>
         <li class="menu-header">Reports</li>
       </ul>

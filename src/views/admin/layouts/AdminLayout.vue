@@ -67,6 +67,9 @@ const checkauth = async (nameroute) => {
     case 'inoutitem':
       name = 'stock';
       break;
+    case 'companyprofileadmin':
+      name = 'company_profiles';
+      break;
     default:
       break;
   }

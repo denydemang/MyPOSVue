@@ -9,15 +9,20 @@ const encryptusername =
 const name = ref(encryption.decrypt(encryptname, ''));
 const username = ref(encryption.decrypt(encryptusername, ''));
 const token = localStorage.getItem('token');
+
 const apiUrl = process.env.VUE_APP_API_URL;
 
 const logout = async () => {
   try {
     await axios.delete(`${apiUrl}/api/users/logout?token=${token}`);
+    let appname = localStorage.getItem('app_name');
     localStorage.clear();
+    localStorage.setItem('app_name', appname);
     window.location.href = '/login';
   } catch (error) {
+    let appname = localStorage.getItem('app_name');
     localStorage.clear();
+    localStorage.setItem('app_name', appname);
     console.log(error);
     window.location.href = '/login';
   }

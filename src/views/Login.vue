@@ -10,6 +10,7 @@ import ex from '@/exception.js';
 const isLoading = ref(true);
 const isFetchingdata = ref(false);
 const usernameform = ref(null);
+const apptitle = ref('');
 const invalidSubmit = ref({
   username: false,
   password: false,
@@ -57,6 +58,17 @@ const manageerrorinvalid = (error) => {
 };
 const postUSER = async () => {
   isFetchingdata.value = true;
+  // check company profile
+  try {
+    const responseDataCompany = await axios.get(`${apiurl}/api/companyprofiles/detail/${branch}`);
+    let nameapp = responseDataCompany.data.data.app_name;
+    nameapp = nameapp.toUpperCase();
+    localStorage.setItem('app_name', myenc.encrypt(nameapp));
+  } catch (error) {
+    localStorage.setItem('app_name', myenc.encrypt('MY POS VUE'));
+  }
+
+  // LOGIN
   try {
     const responseApi = await axios.post(`${apiurl}/api/users/login/${branch}`, postDATA);
     const userdata = responseApi.data.data;
@@ -78,6 +90,7 @@ const postUSER = async () => {
     window.location.href = '/admin';
   } catch (error) {
     isFetchingdata.value = false;
+    console.log(error);
     const exception = new ex(error);
 
     exception.funcnetworkerror = managerrorserver;
@@ -92,7 +105,26 @@ onBeforeMount(async () => {
   if (isAuthenticated) {
     window.location.href = '/admin';
   } else {
-    isLoading.value = false;
+    if (localStorage.getItem('app_name')) {
+      const decrypt = myenc.decrypt(localStorage.getItem('app_name'));
+      if (decrypt) {
+        apptitle.value = decrypt.toUpperCase();
+      } else {
+        apptitle.value = 'MY POS VUE';
+      }
+      isLoading.value = false;
+    } else {
+      try {
+        const responseData = await axios.get(`${apiurl}/api/companyprofiles/detail/${branch}`);
+        const appname = responseData.data.data.app_name;
+        apptitle.value = appname.toUpperCase();
+        isLoading.value = false;
+        localStorage.setItem('app_name', myenc.encrypt(apptitle.value));
+      } catch (error) {
+        apptitle.value = 'MY POS VUE';
+        isLoading.value = false;
+      }
+    }
   }
 });
 </script>
@@ -105,7 +137,7 @@ onBeforeMount(async () => {
       <div class="container">
         <div class="d-flex justify-content-center align-items-center" style="height: 100vh">
           <div style="width: 400px">
-            <div class="login-brand">My POS Vue</div>
+            <div class="login-brand">{{ apptitle }}</div>
             <div class="card card-primary">
               <div class="row m-0">
                 <div class="col-12 col-md-12 col-lg-12 p-0">
@@ -213,8 +245,9 @@ onBeforeMount(async () => {
 }
 .mycontent {
   height: 100vh;
+
   /* background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%); */
-  background-image: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+  background-image: linear-gradient(120deg, #ccccff 0%, #e1ebee 100%);
 }
 .spinner {
   border: 4px solid rgba(0, 0, 0, 0.4);
