@@ -6,7 +6,6 @@ import myenc from '@/myencription.js';
 import axios from 'axios';
 import { formatRupiah } from '@/rupiahformatter';
 import ex from '@/exception.js';
-import checkview from '@/access.js';
 const router = useRouter();
 const route = useRoute();
 const isfetchingdata = ref(false);
@@ -280,13 +279,6 @@ const filterinput = (price = false, buyprice = false) => {
     postData.buyprice = formatRupiah(inputBuyPrice.value);
   }
 };
-onBeforeMount(() => {
-  if (!checkview('master_item')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
-});
 </script>
 <template>
   <div class="main-content">

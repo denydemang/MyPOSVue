@@ -48,14 +48,6 @@ const IDAuto = (e) => {
   }
 };
 
-onBeforeMount(() => {
-  if (!checkview('master_supplier')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
-});
-
 const clearData = () => {
   clearInvalid();
   autoid.value = false;

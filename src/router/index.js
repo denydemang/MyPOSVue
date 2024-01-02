@@ -17,6 +17,7 @@ import SalesReturn from '@/views/admin/transaction/sales/SalesReturn.vue';
 import GRN from '@/views/admin/inventory/GRN.vue';
 import INOUTITEM from '@/views/admin/inventory/INOUTITEM.vue';
 import Page404 from '@/views/Page404.vue';
+import CompanyProfile from '@/views/CompanyProfile.vue'
 import Login from '@/views/Login.vue';
 
 
@@ -197,6 +198,15 @@ const routes = [
         }
       }
     ]
+  },
+  {
+    path: '/companyprofiles',
+    name: 'companyprofile',
+    component: CompanyProfile,
+    meta: {
+      
+      title: 'Register Company Profile'
+    }
   },
   {
     path: '/:pathMatch(.*)',

@@ -28,11 +28,6 @@ const allxApprove = ref(false);
 const allxCreate = ref(false);
 
 onBeforeMount(async () => {
-  if (!checkview('role_user')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
   if (routes.name == 'roleusercreate') {
     namessession.value = 'Add New';
     getApiModule();

@@ -1,11 +1,10 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from 'vue';
 import { iziError, iziSuccess } from '@/izitoast.js';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import ex from '@/exception.js';
 import axios from 'axios';
 import UserTable from '@/components/UserTable.vue';
-import checkview from '@/access.js';
 const MyChild = ref(null);
 const isEdit = ref(false);
 const apiurl = process.env.VUE_APP_API_URL;
@@ -14,7 +13,6 @@ const token = localStorage.getItem('token');
 const titleModal = ref('');
 const roleData = ref([]);
 const isPostingData = ref(false);
-const router = useRouter();
 const invalidSubmit = ref({
   branchcode: '',
   username: '',
@@ -23,14 +21,6 @@ const invalidSubmit = ref({
   konfirmpw: '',
   id_role: '',
   servererror: ''
-});
-onBeforeMount(() => {
-  getApiRole();
-  if (!checkview('master_user')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
 });
 const postData = reactive({
   branchcode: branch,
@@ -158,8 +148,6 @@ const populateModal = (data) => {
   postData.username = data.username;
   postData.id = data.id;
   postData.id_role = data.id_role;
-  // postData.id = data[0].id;
-  // postData.name = data[0].name;
 };
 </script>
 <template>

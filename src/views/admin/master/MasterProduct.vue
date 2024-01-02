@@ -1,8 +1,7 @@
 <script setup>
-import { onBeforeMount, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { iziSuccess } from '@/izitoast.js';
-import checkview from '@/access.js';
 import ProductTable from '@/components/ProductTable.vue';
 
 const router = useRouter();
@@ -16,13 +15,6 @@ onMounted(() => {
   if (sessionStorage.getItem('success')) {
     iziSuccess('success', sessionStorage.getItem('success'));
     sessionStorage.removeItem('success');
-  }
-});
-onBeforeMount(() => {
-  if (!checkview('master_item')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
   }
 });
 </script>

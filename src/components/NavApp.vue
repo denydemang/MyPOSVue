@@ -2,8 +2,12 @@
 import { ref } from 'vue';
 import encryption from '@/myencription.js';
 import axios from 'axios';
-const name = ref(encryption.decrypt(localStorage.getItem('name'), ''));
-const username = ref(encryption.decrypt(localStorage.getItem('username'), ''));
+
+const encryptname = localStorage.getItem('name') != null && localStorage.getItem('name') != '' && localStorage.getItem('name') != undefined ? localStorage.getItem('name') : '';
+const encryptusername =
+  localStorage.getItem('username') != null && localStorage.getItem('username') != '' && localStorage.getItem('username') != undefined ? localStorage.getItem('username') : '';
+const name = ref(encryption.decrypt(encryptname, ''));
+const username = ref(encryption.decrypt(encryptusername, ''));
 const token = localStorage.getItem('token');
 const apiUrl = process.env.VUE_APP_API_URL;
 

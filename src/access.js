@@ -4,6 +4,7 @@ const checkview = (menuname) => {
     try {
     const accessview = JSON.parse(localStorage.getItem('accessview'))
     if(accessview || accessview.length != 0 || accessview != null){
+      // Decrypt isi key tiap accesview
       accessview.map(item => {
         item.id_module = parseInt(myenc.decrypt(item.id_module));
         item.sub_menu = myenc.decrypt(item.sub_menu);

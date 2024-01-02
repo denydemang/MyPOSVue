@@ -2,18 +2,86 @@
 import NavApp from '@/components/NavApp.vue';
 import Sidebar from '@/components/SidebarApp.vue';
 import Footer from '@/components/FooterApp.vue';
-import { ref, onBeforeMount } from 'vue';
-// import { useRouter } from 'vue-router';
-import checkuser from '@/auth.js';
+import { ref, onBeforeMount, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import auth from '@/auth.js';
+// import checkcompany from '@/company.js';
 
 // State untuk menentukan apakah loading sedang aktif atau tidak
 const isLoading = ref(true);
 
+const route = useRoute();
+const checkauth = async (nameroute) => {
+  let name = '';
+  switch (nameroute) {
+    case 'admin':
+      name = 'dashboard';
+      break;
+    case 'mastercategory':
+      name = 'master_category';
+      break;
+    case 'mastercategory':
+      name = 'master_category';
+    case 'masterproduct':
+      name = 'master_item';
+      break;
+    case 'masterproductcreate':
+      name = 'master_item';
+      break;
+    case 'masterproductedit':
+      name = 'master_item';
+      break;
+    case 'masteruser':
+      name = 'master_user';
+      break;
+    case 'roleuser':
+      name = 'role_user';
+      break;
+    case 'roleusercreate':
+      name = 'master_item';
+      break;
+    case 'roleuseredit':
+      name = 'master_item';
+      break;
+    case 'mastersupplier':
+      name = 'master_supplier';
+      break;
+    case 'purchase':
+      name = 'purchase';
+      break;
+    case 'purchasereturn':
+      name = 'purchase_return';
+      break;
+    case 'mastercustomer':
+      name = 'master_customer';
+      break;
+    case 'sales':
+      name = 'sales';
+      break;
+    case 'salesreturn':
+      name = 'sales_return';
+      break;
+    case 'grn':
+      name = 'grn';
+      break;
+    case 'inoutitem':
+      name = 'stock';
+      break;
+    default:
+      break;
+  }
+  const isvaliduser = await auth.authadmin(name);
+  return isvaliduser;
+};
+watch(
+  () => route.name,
+  async () => {
+    await checkauth(route.name);
+  }
+);
 onBeforeMount(async () => {
-  const isAuthenticated = await checkuser();
-  if (!isAuthenticated) {
-    window.location.href = '/login';
-  } else {
+  const isvaliduser = await checkauth(route.name);
+  if (isvaliduser) {
     isLoading.value = false;
   }
 });
@@ -44,7 +112,7 @@ onBeforeMount(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 99999999;
+  z-index: 9999999999999;
 }
 
 /* Gaya untuk loading icon */

@@ -1,18 +1,10 @@
 <script setup>
-import { onBeforeMount, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import checkview from '@/access.js';
 import RoleTable from '@/components/RoleTable.vue';
 import { iziSuccess } from '@/izitoast.js';
 
 const router = useRouter();
-onBeforeMount(() => {
-  if (!checkview('role_user')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
-});
 const addNewView = () => {
   router.push({
     name: 'roleusercreate'

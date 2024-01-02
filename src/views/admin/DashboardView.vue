@@ -1,18 +1,4 @@
-<script setup>
-import checkview from '@/access.js';
-import { onBeforeMount } from 'vue';
-import { useRouter } from 'vue-router';
-
-const route = useRouter();
-
-onBeforeMount(() => {
-  if (!checkview('dashboard')) {
-    route.push({
-      name: 'notfoundthrow'
-    });
-  }
-});
-</script>
+<script setup></script>
 <template>
   <!-- Main Content -->
   <div class="main-content">

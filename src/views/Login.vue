@@ -2,7 +2,7 @@
 import { ref, onBeforeMount, reactive } from 'vue';
 import axios from 'axios';
 // import { useRouter } from 'vue-router';
-import checkuser from '@/auth.js';
+import auth from '@/auth.js';
 import myenc from '@/myencription.js';
 import ex from '@/exception.js';
 
@@ -88,7 +88,7 @@ const postUSER = async () => {
   }
 };
 onBeforeMount(async () => {
-  const isAuthenticated = await checkuser();
+  const isAuthenticated = await auth.checkuser();
   if (isAuthenticated) {
     window.location.href = '/admin';
   } else {

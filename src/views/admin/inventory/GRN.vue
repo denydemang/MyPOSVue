@@ -1,15 +1,15 @@
 <script setup>
-import { onBeforeMount } from 'vue';
-import checkview from '@/access.js';
-import { useRouter } from 'vue-router';
-const router = useRouter();
-onBeforeMount(() => {
-  if (!checkview('grn')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
-});
+// import { onBeforeMount } from 'vue';
+// import checkview from '@/access.js';
+// import { useRouter } from 'vue-router';
+// const router = useRouter();
+// onBeforeMount(() => {
+//   if (!checkview('grn')) {
+//     router.push({
+//       name: 'notfoundthrow'
+//     });
+//   }
+// });
 </script>
 <template>
   <!-- Main Content -->

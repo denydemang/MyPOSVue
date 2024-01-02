@@ -22,58 +22,65 @@ const viewmenu = ref({
   grn: 0,
   stock: 0
 });
-const accessview = JSON.parse(localStorage.getItem('accessview'));
-accessview.map((item) => {
-  item.id_module = parseInt(myenc.decrypt(item.id_module));
-  item.sub_menu = myenc.decrypt(item.sub_menu);
-  item.xView = parseInt(myenc.decrypt(item.xView));
-  return item;
-});
+
 onBeforeMount(() => {
-  for (let i = 0; i < accessview.length; i++) {
-    switch (accessview[i].sub_menu) {
-      case 'dashboard':
-        viewmenu.value.dashboard = accessview[i].xView;
-        break;
-      case 'master_category':
-        viewmenu.value.master_category = accessview[i].xView;
-        break;
-      case 'master_item':
-        viewmenu.value.master_item = accessview[i].xView;
-        break;
-      case 'master_user':
-        viewmenu.value.master_user = accessview[i].xView;
-        break;
-      case 'role_user':
-        viewmenu.value.role_user = accessview[i].xView;
-        break;
-      case 'master_supplier':
-        viewmenu.value.master_supplier = accessview[i].xView;
-        break;
-      case 'purchase':
-        viewmenu.value.purchase = accessview[i].xView;
-        break;
-      case 'purchase_return':
-        viewmenu.value.purchase_return = accessview[i].xView;
-        break;
-      case 'master_customer':
-        viewmenu.value.master_customer = accessview[i].xView;
-        break;
-      case 'sales':
-        viewmenu.value.sales = accessview[i].xView;
-        break;
-      case 'sales_return':
-        viewmenu.value.sales_return = accessview[i].xView;
-        break;
-      case 'company_profiles':
-        viewmenu.value.company_profiles = accessview[i].xView;
-        break;
-      case 'grn':
-        viewmenu.value.grn = accessview[i].xView;
-        break;
-      case 'stock':
-        viewmenu.value.stock = accessview[i].xView;
-        break;
+  let accessview =
+    localStorage.getItem('accessview') != null && localStorage.getItem('accessview') != '' && localStorage.getItem('accessview') != undefined
+      ? localStorage.getItem('accessview')
+      : null;
+  if (accessview != null) {
+    accessview = JSON.parse(accessview);
+    accessview.map((item) => {
+      item.id_module = parseInt(myenc.decrypt(item.id_module));
+      item.sub_menu = myenc.decrypt(item.sub_menu);
+      item.xView = parseInt(myenc.decrypt(item.xView));
+      return item;
+    });
+    for (let i = 0; i < accessview.length; i++) {
+      switch (accessview[i].sub_menu) {
+        case 'dashboard':
+          viewmenu.value.dashboard = accessview[i].xView;
+          break;
+        case 'master_category':
+          viewmenu.value.master_category = accessview[i].xView;
+          break;
+        case 'master_item':
+          viewmenu.value.master_item = accessview[i].xView;
+          break;
+        case 'master_user':
+          viewmenu.value.master_user = accessview[i].xView;
+          break;
+        case 'role_user':
+          viewmenu.value.role_user = accessview[i].xView;
+          break;
+        case 'master_supplier':
+          viewmenu.value.master_supplier = accessview[i].xView;
+          break;
+        case 'purchase':
+          viewmenu.value.purchase = accessview[i].xView;
+          break;
+        case 'purchase_return':
+          viewmenu.value.purchase_return = accessview[i].xView;
+          break;
+        case 'master_customer':
+          viewmenu.value.master_customer = accessview[i].xView;
+          break;
+        case 'sales':
+          viewmenu.value.sales = accessview[i].xView;
+          break;
+        case 'sales_return':
+          viewmenu.value.sales_return = accessview[i].xView;
+          break;
+        case 'company_profiles':
+          viewmenu.value.company_profiles = accessview[i].xView;
+          break;
+        case 'grn':
+          viewmenu.value.grn = accessview[i].xView;
+          break;
+        case 'stock':
+          viewmenu.value.stock = accessview[i].xView;
+          break;
+      }
     }
   }
 });
@@ -231,7 +238,7 @@ onMounted(() => {
   <div class="main-sidebar sidebar-style-2">
     <aside id="sidebar-wrapper">
       <div class="sidebar-brand">
-        <a href="index.html">Stisla</a>
+        <a href="index.html"></a>
       </div>
       <div class="sidebar-brand sidebar-brand-sm">
         <a href="index.html">St</a>

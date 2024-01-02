@@ -1,16 +1,4 @@
-<script setup>
-import { onBeforeMount } from 'vue';
-import checkview from '@/access.js';
-import { useRouter } from 'vue-router';
-const router = useRouter();
-onBeforeMount(() => {
-  if (!checkview('sales_return')) {
-    router.push({
-      name: 'notfoundthrow'
-    });
-  }
-});
-</script>
+<script setup></script>
 <template>
   <!-- Main Content -->
   <div class="main-content">
