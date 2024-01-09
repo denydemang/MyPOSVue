@@ -17,7 +17,7 @@ const route = useRoute();
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
-
+const filterby = ref('all');
 const isdeleting = ref(false);
 const loading = ref(true);
 const total_rows = ref(0);
@@ -80,7 +80,7 @@ const filterProduct = async () => {
     let convertsearch = '';
     convertsearch = params.search.replace(/\s/g, '%');
     const responseData = await axios.get(
-      `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}`,
+      `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}&filterby=${filterby.value}`,
       {
         headers: {
           Authorization: token
@@ -141,13 +141,34 @@ const viewEdit = (data) => {
   });
   sessionStorage.setItem('paramsid', enc.encrypt(data.id));
 };
+const cekvalue = (e) => {
+  filterby.value = e.target.value;
+  filterProduct();
+};
 </script>
 <template>
   <div v-if="isdeleting" class="loading-overlay">
     <div class="loader"></div>
   </div>
   <div>
-    <div class="row px-3 mb-2">
+    <div class="row px-3">
+      <div class="form-group d-flex justify-content-center">
+        <label for="filterby" class="pt-2" style="width: 100px">Filter By</label>
+        <select class="form-control" @change="cekvalue">
+          <option value="all" selected>All</option>
+          <option value="barcode">Barcode</option>
+          <option value="name">Name</option>
+          <option value="brands">Brands</option>
+          <option value="price">Price</option>
+          <option value="category">Category</option>
+          <option value="unit">Unit</option>
+          <option value="remaining_stock">Remaining Stock</option>
+          <option value="maxstock">Maxstock</option>
+          <option value="minstock">Minstock</option>
+        </select>
+      </div>
+    </div>
+    <div class="row px-3 mb-2" style="margin-top: -20px">
       <input v-model="params.search" type="text" class="form-control col-lg-3 col-md-4 col-12" placeholder="Search..." />
     </div>
     <vue3-datatable
