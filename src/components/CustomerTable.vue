@@ -20,7 +20,7 @@
     >
       <template #actions="data">
         <div>
-          <button type="button" data-toggle="modal" data-target="#modalSupplier" class="btn btn-success btn-sm" @click="viewEdit(data.value)">
+          <button type="button" data-toggle="modal" data-target="#modalCustomer" class="btn btn-success btn-sm" @click="viewEdit(data.value)">
             <i class="fas fa-edit"></i> Edit
           </button>
           <button type="button" class="btn btn-danger btn-sm" @click="viewDelete(data.value)"><i class="fas fa-trash"></i> Delete</button>
@@ -38,10 +38,10 @@ import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import axios from 'axios';
 import ex from '@/exception.js';
 onMounted(() => {
-  getSupplier();
+  getCustomer();
 });
 
-const emit = defineEmits(['dataSupplier']);
+const emit = defineEmits(['dataCustomer']);
 
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
@@ -55,7 +55,7 @@ const params = reactive({ current_page: 1, pagesize: 10, search: '' });
 const rows = ref(null);
 const manageerror = (error, name) => {
   if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-    showerror('Supplier ' + name + ' Already Used In Transaction Cannot Be Deleted');
+    showerror('Customer ' + name + ' Already Used In Transaction Cannot Be Deleted');
   } else {
     showerror('ERROR!!! Internal Server Error');
   }
@@ -63,18 +63,18 @@ const manageerror = (error, name) => {
 const cols =
   ref([
     { field: 'no', title: '#', isUnique: true },
-    { field: 'number_id', title: 'ID Number', isUnique: true },
-    { field: 'name', title: 'Supplier Name' },
+    { field: 'cust_no', title: 'ID Cust', isUnique: true },
+    { field: 'name', title: 'Customer Name' },
     { field: 'address', title: 'Address' },
-    { field: 'contact', title: 'Contact' },
+    { field: 'phone', title: 'phone' },
     { field: 'actions', title: 'Actions' }
   ]) || [];
 
-const getSupplier = async () => {
+const getCustomer = async () => {
   try {
     loading.value = true;
 
-    const responseData = await axios.get(`${apiurl}/api/suppliers/list/${branch}?page=${params.current_page}&perpage=${params.pagesize}`, {
+    const responseData = await axios.get(`${apiurl}/api/customers/list/${branch}?page=${params.current_page}&perpage=${params.pagesize}`, {
       headers: {
         Authorization: token
       }
@@ -83,13 +83,13 @@ const getSupplier = async () => {
     let counter = params.current_page * params.pagesize - params.pagesize + 1;
 
     // Menambahkan properti 'no' dengan nilai increment pada setiap objek
-    let dataSupplier = responseData.data.data;
-    dataSupplier.forEach((obj, key) => {
+    let dataCustomer = responseData.data.data;
+    dataCustomer.forEach((obj, key) => {
       obj.no = counter++;
     });
     let totalAllRows = responseData.data.meta.total;
     total_rows.value = totalAllRows;
-    rows.value = dataSupplier;
+    rows.value = dataCustomer;
   } catch (error) {
     const exception = new ex(error);
     exception.showError();
@@ -98,17 +98,17 @@ const getSupplier = async () => {
   loading.value = false;
 };
 
-const deleteSupplier = async (id, name) => {
+const deleteCustomer = async (id, name) => {
   try {
     isdeleting.value = true;
-    await axios.delete(`${apiurl}/api/suppliers/${id}`, {
+    await axios.delete(`${apiurl}/api/customers/${branch}/${id}`, {
       headers: {
         Authorization: token
       }
     });
     isdeleting.value = false;
-    filterSupplier();
-    iziSuccess('Success', 'Successfully Deleted Supplier ' + name);
+    filterCustomer();
+    iziSuccess('Success', 'Successfully Deleted Customer ' + name);
   } catch (error) {
     isdeleting.value = false;
     const exception = new ex(error);
@@ -118,13 +118,12 @@ const deleteSupplier = async (id, name) => {
   }
 };
 
-const filterSupplier = async () => {
+const filterCustomer = async () => {
   try {
     loading.value = true;
     let convertsearch = '';
     convertsearch = params.search.replace(/\s/g, '%');
-
-    const responseData = await axios.get(`${apiurl}/api/suppliers/${branch}/search?key=${convertsearch}&perpage=${params.pagesize}&page=${params.current_page}`, {
+    const responseData = await axios.get(`${apiurl}/api/customers/${branch}/search?key=${convertsearch}&perpage=${params.pagesize}&page=${params.current_page}`, {
       headers: {
         Authorization: token
       }
@@ -153,24 +152,24 @@ const changeServer = (data) => {
   params.current_page = data.current_page;
   params.pagesize = data.pagesize;
   params.search = data.search;
-  filterSupplier();
+  filterCustomer();
 };
 const viewEdit = (data) => {
-  emit('dataSupplier', {
+  emit('dataCustomer', {
     id: data.id,
     name: data.name,
-    number_id: data.number_id,
+    cust_no: data.cust_no,
     address: data.address,
-    contact: data.contact
+    phone: data.phone
   });
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteSupplier, 'Supplier');
+  showconfirmdelete(data, deleteCustomer, 'Customer');
 };
-//mengekspose function agar function getSupplier bisa di jalankan di component parent
+//mengekspose function agar function getCustomer bisa di jalankan di component parent
 defineExpose({
-  getSupplier
+  getCustomer
 });
 </script>
 <style scoped>

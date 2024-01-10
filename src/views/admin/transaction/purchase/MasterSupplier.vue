@@ -1,8 +1,7 @@
 <script setup>
-import { onBeforeMount, reactive, ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import SupplierTable from '@/components/SupplierTable.vue';
-import checkview from '@/access.js';
 import axios from 'axios';
 import ex from '@/exception.js';
 import { iziSuccess } from '@/izitoast';
@@ -14,7 +13,6 @@ const MyChild = ref(null);
 const autoid = ref(false);
 const isEdit = ref(false);
 const isPostingData = ref(false);
-const router = useRouter();
 
 $(document).ready(function () {
   $('#modalSupplier').on('hidden.bs.modal', function (e) {
@@ -86,7 +84,6 @@ const manageerror400 = (error) => {
   } else {
     invalidInput.value.contact = '';
   }
-  console.log(error);
 };
 const addNewView = (titleName) => {
   titleModal.value = titleName;
