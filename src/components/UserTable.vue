@@ -9,15 +9,15 @@
       </div>
       <div class="d-flex">
         <div class="form-check mr-2">
-          <input class="form-check-input" @change="filterCategory" v-model="selectedOption" type="radio" name="activeradio" id="all" value="all" checked />
+          <input class="form-check-input" @change="filterUser" v-model="selectedOption" type="radio" name="activeradio" id="all" value="all" checked />
           <label class="form-check-label" for="all">All</label>
         </div>
         <div class="form-check mr-2">
-          <input class="form-check-input" @change="filterCategory" v-model="selectedOption" type="radio" name="activeradio" id="active" value="active" />
+          <input class="form-check-input" @change="filterUser" v-model="selectedOption" type="radio" name="activeradio" id="active" value="active" />
           <label class="form-check-label" for="active">Active</label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" @change="filterCategory" v-model="selectedOption" type="radio" name="activeradio" id="unactive" value="unactive" />
+          <input class="form-check-input" @change="filterUser" v-model="selectedOption" type="radio" name="activeradio" id="unactive" value="unactive" />
           <label class="form-check-label" for="unactive">Inactive</label>
         </div>
       </div>
@@ -162,11 +162,12 @@ const deleteUser = async (id, name) => {
   }
 };
 
-const filterCategory = async () => {
+const filterUser = async () => {
   try {
     loading.value = true;
     let convertsearch = '';
-    convertsearch = params.search.replace(/\s/g, '%');
+    // convertsearch = params.search.replace(/\s/g, '%20');
+    convertsearch = encodeURIComponent(params.search);
     switch (selectedOption.value) {
       case 'all':
         var responseData = await axios.get(`${apiurl}/api/users/search?branchcode=${branch}&perpage=${params.pagesize}&page=${params.current_page}&key=${convertsearch}`, {
@@ -221,9 +222,9 @@ const changeServer = (data) => {
   params.pagesize = data.pagesize;
   params.search = data.search;
   // if (data.change_type === 'search') {
-  //   filterCategory();
+  //   filterUser();
   // } else {
-  filterCategory();
+  filterUser();
   // }
 };
 const viewEdit = (data) => {

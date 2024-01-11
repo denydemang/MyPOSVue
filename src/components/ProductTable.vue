@@ -78,7 +78,13 @@ const filterProduct = async () => {
   try {
     loading.value = true;
     let convertsearch = '';
-    convertsearch = params.search.replace(/\s/g, '%');
+    // convertsearch = params.search.replace(/\s/g, '%20');
+    convertsearch = encodeURIComponent(params.search);
+    console.log({
+      convertsearch: convertsearch,
+      orderby: params.orderby,
+      filterby: filterby.value
+    });
     const responseData = await axios.get(
       `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}&filterby=${filterby.value}`,
       {

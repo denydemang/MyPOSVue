@@ -119,8 +119,9 @@ const deleteCategory = async (id, name) => {
 const filterCategory = async () => {
   try {
     loading.value = true;
-
-    const responseData = await axios.get(`${apiurl}/api/categories/${branch}/search?key=${params.search}&perpage=${params.pagesize}&page=${params.current_page}`, {
+    let convertsearch = '';
+    convertsearch = encodeURIComponent(params.search);
+    const responseData = await axios.get(`${apiurl}/api/categories/${branch}/search?key=${convertsearch}&perpage=${params.pagesize}&page=${params.current_page}`, {
       headers: {
         Authorization: token
       }

@@ -122,7 +122,8 @@ const filterSupplier = async () => {
   try {
     loading.value = true;
     let convertsearch = '';
-    convertsearch = params.search.replace(/\s/g, '%');
+    // convertsearch = params.search.replace(/\s/g, '%20');
+    convertsearch = encodeURIComponent(params.search);
 
     const responseData = await axios.get(`${apiurl}/api/suppliers/${branch}/search?key=${convertsearch}&perpage=${params.pagesize}&page=${params.current_page}`, {
       headers: {
