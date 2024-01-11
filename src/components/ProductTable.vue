@@ -125,6 +125,7 @@ const deleteProduct = async (id, name) => {
 
 //Jika perubahan yang terjadi pada table seprti mengklik pagination mengubah jumlah row dll
 const changeServer = (data) => {
+  console.log(data.sort_column);
   params.current_page = data.current_page;
   params.pagesize = data.pagesize;
   params.search = data.search;

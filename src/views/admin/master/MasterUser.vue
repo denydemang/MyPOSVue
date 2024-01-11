@@ -13,6 +13,9 @@ const token = localStorage.getItem('token');
 const titleModal = ref('');
 const roleData = ref([]);
 const isPostingData = ref(false);
+onBeforeMount(() => {
+  getApiRole();
+});
 const invalidSubmit = ref({
   branchcode: '',
   username: '',
