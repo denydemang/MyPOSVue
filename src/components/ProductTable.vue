@@ -51,7 +51,7 @@ const getApiProduct = async () => {
     loading.value = true;
 
     const responseData = await axios.get(
-      `${apiurl}/api/products/list/${params.pagesize}/${branch}?orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}`,
+      `${apiurl}/api/products/list/${params.pagesize}/${branch}?orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&perpage=${params.pagesize}`,
       {
         headers: {
           Authorization: token
@@ -80,11 +80,6 @@ const filterProduct = async () => {
     let convertsearch = '';
     // convertsearch = params.search.replace(/\s/g, '%20');
     convertsearch = encodeURIComponent(params.search);
-    console.log({
-      convertsearch: convertsearch,
-      orderby: params.orderby,
-      filterby: filterby.value
-    });
     const responseData = await axios.get(
       `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}&filterby=${filterby.value}`,
       {
@@ -131,7 +126,6 @@ const deleteProduct = async (id, name) => {
 
 //Jika perubahan yang terjadi pada table seprti mengklik pagination mengubah jumlah row dll
 const changeServer = (data) => {
-  console.log(data.sort_column);
   params.current_page = data.current_page;
   params.pagesize = data.pagesize;
   params.search = data.search;
