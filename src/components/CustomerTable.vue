@@ -166,7 +166,7 @@ const viewEdit = (data) => {
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteCustomer, 'Customer');
+  showconfirmdelete(data.id, data.name, deleteCustomer, 'Customer');
 };
 //mengekspose function agar function getCustomer bisa di jalankan di component parent
 defineExpose({

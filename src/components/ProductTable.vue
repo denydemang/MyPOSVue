@@ -134,7 +134,7 @@ const changeServer = (data) => {
   filterProduct();
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteProduct, 'Product');
+  showconfirmdelete(data.id, data.name, deleteProduct, 'Product');
 };
 const viewEdit = (data) => {
   router.push({

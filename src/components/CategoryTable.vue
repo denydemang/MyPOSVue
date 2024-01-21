@@ -166,7 +166,7 @@ const viewEdit = (data) => {
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteCategory, 'Category');
+  showconfirmdelete(data.id, data.name, deleteCategory, 'Category');
 };
 //mengekspose function agar function getCategory bisa di jalankan di component parent
 defineExpose({

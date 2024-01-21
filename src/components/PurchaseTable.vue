@@ -4,7 +4,7 @@ import { iziSuccess } from '@/izitoast.js';
 import { useRouter } from 'vue-router';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
-import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
+import { showconfirmdelete, showerror, showconfirmapprove, showconfirmbulkdelete, showconfirmbulkapprove } from '@/jqueryconfirm.js';
 import { formatRupiah } from '@/rupiahformatter.js';
 import enc from '@/myencription.js';
 import ex from '@/exception.js';
@@ -26,13 +26,18 @@ const config = ref({
 // inisiasi function mydate
 const Date = new MyDate();
 
+const emit = defineEmits(['viewItem']);
+
 const router = useRouter();
+const listSelectedPurchase = ref([]);
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
 const isdeleting = ref(false);
 const loading = ref(true);
 const total_rows = ref(0);
+const enabledBulk = ref(true);
+const enabledCounter = ref(true);
 const params = reactive({
   current_page: 1,
   pagesize: 10,
@@ -45,17 +50,18 @@ const params = reactive({
   is_approve: null,
   filterby: ''
 });
+
 const rows = ref(null);
 const setupDefault = () => {
   params.filterby = 'all';
   params.paystatus = 'true';
-  params.is_approve = false;
+  params.is_approve = 'false';
   params.startDate = Date.getfirstdate();
   params.endDate = Date.getlastdate();
 };
 const manageerror = (error, name) => {
   if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-    showerror('Product ' + name + ' Already Used In Transaction Cannot Be Deleted');
+    showerror('Purchase ' + name + ' Already Used In Transaction Cannot Be Deleted');
   } else {
     showerror('ERROR!!! Internal Server Error');
   }
@@ -134,6 +140,8 @@ const getSearchApiPurchase = async () => {
     );
     let dataPurchase = responseData.data.data;
     let totalAllRows = responseData.data.meta.total;
+
+    // Format value purchase data
     dataPurchase.map((item) => {
       item.total_purchase = formatRupiah(item.total_purchase);
       item.other_fee = formatRupiah(item.other_fee);
@@ -154,23 +162,132 @@ const getSearchApiPurchase = async () => {
 
   loading.value = false;
 };
-const deleteProduct = async (id, name) => {
+const deletePurchase = async (id, name) => {
   try {
     isdeleting.value = true;
-    await axios.delete(`${apiurl}/api/products/${branch}/${id}`, {
+    await axios.delete(`${apiurl}/api/purchases/${branch}/${id}`, {
       headers: {
         Authorization: token
       }
     });
     isdeleting.value = false;
     getApiPurchase();
-    iziSuccess('Success', 'Successfully Deleted Product ' + name);
+    iziSuccess('Success', 'Successfully Deleted Purchase ' + name);
   } catch (error) {
     isdeleting.value = false;
     const exception = new ex(error);
     exception.func500 = manageerror;
     exception.additionaldata = name;
     exception.showError();
+  }
+};
+const bulkDeletePurchase = async (listPurchase = []) => {
+  let countDeleted = 0;
+  let maxlooping = listPurchase.length;
+  for (let i = 0; i < listPurchase.length; i++) {
+    try {
+      isdeleting.value = true;
+      await axios.delete(`${apiurl}/api/purchases/${branch}/${listPurchase[i].id}`, {
+        headers: {
+          Authorization: token
+        }
+      });
+      countDeleted++;
+    } catch (error) {
+      const exception = new ex(error);
+      exception.func500 = manageerror;
+      exception.additionaldata = listPurchase[i].trans_no;
+      exception.showError();
+      isdonedelete();
+      break;
+    }
+    if (i == maxlooping - 1) {
+      isdonedelete();
+    }
+  }
+
+  function isdonedelete() {
+    isdeleting.value = false;
+    if (countDeleted == maxlooping) {
+      // Jika Berhasil Menghapus Semua Purchase
+      iziSuccess('Success', `Successfully Deleted All Selected Purchase (${countDeleted} Records) `);
+      getApiPurchase();
+    } else if (countDeleted > 0 && countDeleted < maxlooping) {
+      iziSuccess('Success', `Successfully Deleted (${countDeleted}) of (${maxlooping}) Selected Purchase`);
+      getApiPurchase();
+    } else {
+      getApiPurchase();
+    }
+  }
+};
+
+const approvePurchase = async (id, name) => {
+  try {
+    isdeleting.value = true;
+    await axios.patch(`${apiurl}/api/purchases/${branch}/${id}`, '', {
+      headers: {
+        Authorization: token
+      }
+    });
+    isdeleting.value = false;
+    getApiPurchase();
+    iziSuccess('Success', 'Successfully Approved Purchase ' + name);
+  } catch (error) {
+    isdeleting.value = false;
+    const exception = new ex(error);
+    exception.showError();
+  }
+};
+const bulkApprovePurchase = async (listPurchase = []) => {
+  let countApproved = 0;
+  let maxlooping = listPurchase.length;
+  for (let i = 0; i < listPurchase.length; i++) {
+    try {
+      isdeleting.value = true;
+      await axios.patch(`${apiurl}/api/purchases/${branch}/${listPurchase[i].id}`, '', {
+        headers: {
+          Authorization: token
+        }
+      });
+      countApproved++;
+    } catch (error) {
+      const exception = new ex(error);
+      exception.showError();
+      isdoneapprove();
+      break;
+    }
+    if (i == maxlooping - 1) {
+      isdoneapprove();
+    }
+  }
+
+  function isdoneapprove() {
+    isdeleting.value = false;
+    if (countApproved == maxlooping) {
+      // Jika Berhasil Mengapprove Semua Purchase
+      iziSuccess('Success', `Successfully Approved ALL Selected Purchase (${countApproved} Records)`);
+      getApiPurchase();
+    } else if (countApproved > 0 && countApproved < maxlooping) {
+      iziSuccess('Success', `Successfully Approved (${countApproved}) of (${maxlooping}) Selected Purchase`);
+      getApiPurchase();
+    } else {
+      getApiPurchase();
+    }
+  }
+};
+const collectSelectedPurchase = (data) => {
+  // Get Only id and trans no
+  if (data.length > 0) {
+    listSelectedPurchase.value = data.map((item) => {
+      let data = {
+        id: item.id,
+        trans_no: item.trans_no
+      };
+
+      return data;
+    });
+  } else {
+    listSelectedPurchase.value = [];
   }
 };
 
@@ -185,7 +302,10 @@ const changeServer = (data) => {
   getSearchApiPurchase();
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteProduct, 'Product');
+  showconfirmdelete(data.id, data.trans_no, deletePurchase, 'Purchase');
+};
+const viewBulkDelete = () => {
+  showconfirmbulkdelete(listSelectedPurchase.value, bulkDeletePurchase, 'Purchase');
 };
 const viewEdit = (data) => {
   router.push({
@@ -193,12 +313,36 @@ const viewEdit = (data) => {
   });
   sessionStorage.setItem('paramsid', enc.encrypt(data.id));
 };
+const viewItem = (data) => {
+  emit('viewItem', {
+    data
+  });
+};
+
+const viewApprove = (data) => {
+  showconfirmapprove(data.id, data.trans_no, approvePurchase, 'Purchase');
+};
+
+const viewBulkApprove = () => {
+  showconfirmbulkapprove(listSelectedPurchase.value, bulkApprovePurchase, 'Purchase');
+};
 const changeValue = () => {
   getSearchApiPurchase();
+  checkAproval();
+};
+const checkAproval = () => {
+  if (params.is_approve == 'false') {
+    enabledBulk.value = true;
+    enabledCounter.value = true;
+  } else {
+    enabledBulk.value = false;
+    enabledCounter.value = false;
+  }
 };
 onMounted(() => {
   setupDefault();
   getApiPurchase();
+  checkAproval();
 });
 </script>
 <template>
@@ -276,7 +420,13 @@ onMounted(() => {
     </div>
   </div>
 
-  <div>
+  <!-- Bulk Button -->
+  <span class="badge badge-primary py-1 px-2 mr-3 ml-2" v-if="enabledCounter" style="font-size: 18px">{{ listSelectedPurchase.length }}</span>
+  <button class="btn btn-danger mr-2" @click="viewBulkDelete" v-if="listSelectedPurchase.length > 0"><i class="fas fa-trash"></i> Delete Selected</button>
+  <button class="btn btn-warning mr-2" @click="viewBulkApprove" v-if="listSelectedPurchase.length > 0"><i class="fas fa-check"></i> Approve Selected</button>
+
+  <!-- Table Purchase -->
+  <div class="mt-2">
     <vue3-datatable
       :rows="rows"
       :columns="cols"
@@ -285,13 +435,16 @@ onMounted(() => {
       :isServerMode="true"
       :pageSize="params.pagesize"
       @change="changeServer"
+      :hasCheckbox="enabledBulk"
       :search="params.search"
       :sortable="true"
       :stickyHeader="true"
       height="600px"
+      @rowSelect="collectSelectedPurchase"
       noDataContent="No records found in the database"
       :stickyFirstColumn="true"
     >
+      <!-- Slot vue3-datatable -->
       <template #is_approve="data">
         <span v-if="data.value.is_approve" class="badge badge-sm badge-primary">Approved</span>
         <span v-if="!data.value.is_approve" class="badge badge-sm badge-secondary">Not Approved</span>
@@ -302,12 +455,18 @@ onMounted(() => {
       </template>
       <template #actions="data">
         <div class="d-lg-flex">
-          <button type="button" title="Edit" class="btn btn-success btn-sm mr-1" @click="viewEdit(data.value)">
+          <button type="button" v-if="!data.value.is_approve" title="Edit" class="btn btn-success btn-sm mr-1" @click="viewEdit(data.value)">
             <i class="fas fa-edit"></i></button
           ><br />
-          <button type="button" class="btn btn-danger btn-sm mr-1" title="Delete" @click="viewDelete(data.value)"><i class="fas fa-trash-alt"></i></button>
-          <button type="button" class="btn btn-warning btn-sm mr-1" title="Approve" @click="viewDelete(data.value)"><i class="fas fa-check"></i></button>
-          <button type="button" class="btn btn-primary btn-sm" title="Detail Item" @click="viewDelete(data.value)"><i class="fas fa-eye"></i></button>
+          <button type="button" v-if="!data.value.is_approve" class="btn btn-danger btn-sm mr-1" title="Delete" @click="viewDelete(data.value)">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+          <button type="button" v-if="!data.value.is_approve" @click="viewApprove(data.value)" class="btn btn-warning btn-sm mr-1" title="Approve">
+            <i class="fas fa-check"></i>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" @click="viewItem(data.value)" title="Detail Item">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
       </template>
     </vue3-datatable>

@@ -13,6 +13,7 @@
     "chart.js": "^2.9.4",
     "core-js": "^3.8.3",
     "crypto-js": "^4.2.0",
+    "element-plus": "^2.5.2",
     "jquery": "^3.7.1",
     "jquery-confirm": "^3.3.4",
     "moment": "^2.30.1",

@@ -237,7 +237,7 @@ const viewEdit = (data) => {
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteUser, 'User With Name');
+  showconfirmdelete(data.id, data.name, deleteUser, 'User With Name');
 };
 
 const activate = async (data) => {

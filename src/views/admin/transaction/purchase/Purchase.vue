@@ -4,154 +4,83 @@ import PurchaseTable from '@/components/PurchaseTable.vue';
 import axios from 'axios';
 import ex from '@/exception.js';
 import { iziSuccess } from '@/izitoast';
+import { ElDialog, ElSkeleton } from 'element-plus';
+import { formatRupiah } from '@/rupiahformatter';
+
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
-const titleModal = ref('');
-const MyChild = ref(null);
-const autoid = ref(false);
-const isEdit = ref(false);
+const itemPurchase = ref([]);
+const transPurchase = ref({});
 const isPostingData = ref(false);
+const modalDetailItemVisible = ref(false);
+const isfetchingdata = ref(false);
 
-$(document).ready(function () {
-  $('#modalSupplier').on('hidden.bs.modal', function (e) {
-    clearData();
-  });
-});
-const invalidInput = ref({
-  number_id: '',
-  name: '',
-  address: '',
-  contact: ''
-});
-const postData = reactive({
-  branchcode: branch,
-  id: null,
-  number_id: null,
-  name: null,
-  address: null,
-  contact: null,
-  active: 1
-});
-const IDAuto = (e) => {
-  const checked = e.target.checked;
-
-  if (checked) {
-    autoid.value = true;
-    postData.number_id = 'AUTO';
-  } else {
-    autoid.value = false;
-    postData.number_id = null;
-  }
+const populateModal = async (data) => {
+  let getData = data.data;
+  modalDetailItemVisible.value = true;
+  getApiItemPurchase(getData);
 };
 
-const clearData = () => {
-  clearInvalid();
-  autoid.value = false;
-  isEdit.value = false;
-  postData.number_id = null;
-  postData.name = null;
-  postData.contact = null;
-  postData.address = null;
-};
-const clearInvalid = () => {
-  invalidInput.value.name = '';
-  invalidInput.value.number_id = '';
-  invalidInput.value.address = '';
-  invalidInput.value.contact = '';
-};
-
-const manageerror400 = (error) => {
-  const errorresponsedata = error.response.data.errors;
-  if (errorresponsedata.hasOwnProperty('name')) {
-    invalidInput.value.name = errorresponsedata.name[0];
-  } else {
-    invalidInput.value.name = '';
-  }
-  if (errorresponsedata.hasOwnProperty('number_id')) {
-    invalidInput.value.number_id = errorresponsedata.number_id[0];
-  } else {
-    invalidInput.value.number_id = '';
-  }
-  if (errorresponsedata.hasOwnProperty('address')) {
-    invalidInput.value.address = errorresponsedata.address[0];
-  } else {
-    invalidInput.value.contact = '';
-  }
-  if (errorresponsedata.hasOwnProperty('contact')) {
-    invalidInput.value.contact = errorresponsedata.contact[0];
-  } else {
-    invalidInput.value.contact = '';
-  }
-};
-const addNewView = (titleName) => {
-  titleModal.value = titleName;
-  isEdit.value = false;
-};
-const populateModal = (data) => {
-  isEdit.value = true;
-  titleModal.value = 'Edit Supplier';
-  postData.id = data.id;
-  postData.number_id = data.number_id;
-  postData.address = data.address;
-  postData.contact = data.contact;
-  postData.name = data.name;
-};
-const postApiData = async () => {
-  isPostingData.value = true;
-  clearInvalid();
-  if (autoid.value == false && postData.number_id == null) {
-    invalidInput.value.number_id = 'ID Number Is Required';
-    isPostingData.value = false;
-  } else {
-    invalidInput.value.number_id = '';
-    if (autoid.value == true) {
-      postData.number_id = null;
-    }
-    try {
-      await axios.post(`${apiurl}/api/suppliers`, postData, {
-        headers: {
-          Authorization: token
-        }
-      });
-      isPostingData.value = false;
-      iziSuccess('Success', 'Successfully Add New Supplier: ' + postData.name);
-      $('#modalSupplier').modal('hide');
-      MyChild.value.getSupplier();
-    } catch (error) {
-      if (autoid.value == true) {
-        postData.number_id = 'AUTO';
-      }
-      isPostingData.value = false;
-      const exception = new ex(error);
-      exception.func400 = manageerror400;
-      exception.showError();
-    }
-  }
-};
-const putApiData = async () => {
-  isPostingData.value = true;
-  clearInvalid();
-  autoid.value = false;
+const getApiItemPurchase = async (data) => {
+  isfetchingdata.value = true;
   try {
-    await axios.put(`${apiurl}/api/suppliers/${branch}/${postData.id}`, postData, {
+    const apiData = await axios.get(`${apiurl}/api/purchases/detail/${branch}/${data.id}`, {
       headers: {
         Authorization: token
       }
     });
-    isPostingData.value = false;
-    iziSuccess('Success', 'Successfully Edited Supplier: ' + postData.name);
-    $('#modalSupplier').modal('hide');
-    MyChild.value.getSupplier();
+    let dataItem = apiData.data.data.item;
+    let dataTrans = apiData.data.data.purchase;
+    itemPurchase.value = dataItem;
+    transPurchase.value = dataTrans;
+    isfetchingdata.value = false;
   } catch (error) {
-    isPostingData.value = false;
+    isfetchingdata.value = false;
+    transPurchase.value = {};
+    itemPurchase.value = [];
     const exception = new ex(error);
-    exception.func400 = manageerror400;
     exception.showError();
   }
 };
 </script>
 <template>
+  <!-- Modal Form -->
+  <el-dialog v-model="modalDetailItemVisible" destroy-on-close>
+    <template #header="" v-if="!isfetchingdata && transPurchase">
+      <h5>Trans No: [{{ transPurchase.trans_no }}]</h5>
+    </template>
+    <el-skeleton :rows="3" animated v-if="isfetchingdata" />
+    <table class="table table-sm table-bordered" v-if="!isfetchingdata && itemPurchase.length > 0">
+      <thead>
+        <th>Barcode</th>
+        <th>Name</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Price</th>
+        <th>Sub Total</th>
+        <th>Disc</th>
+        <th>Grand Total</th>
+      </thead>
+      <tbody>
+        <tr v-for="item in itemPurchase" :key="item.barcode">
+          <td>{{ item.barcode }}</td>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.qty }}</td>
+          <td>{{ item.unit }}</td>
+          <td>{{ formatRupiah(item.price) }}</td>
+          <td>{{ formatRupiah(item.total) }}</td>
+          <td>{{ formatRupiah(item.discount) }}</td>
+          <td class="text-center">{{ formatRupiah(item.sub_total) }}</td>
+        </tr>
+        <tr>
+          <td colspan="7" class="text-right pr-3" style="font-weight: bold">Grand Total Item (Sum)</td>
+          <td style="font-weight: bold" class="text-center">{{ formatRupiah(transPurchase.total_purchase) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </el-dialog>
+
   <!-- Main Content -->
   <div class="main-content">
     <section class="section">
@@ -167,7 +96,7 @@ const putApiData = async () => {
                   <i class="fas fa-plus"></i> Add New
                 </button>
               </div>
-              <PurchaseTable />
+              <PurchaseTable @view-item="populateModal" />
             </div>
           </div>
         </div>
@@ -175,3 +104,4 @@ const putApiData = async () => {
     </section>
   </div>
 </template>
+<style scoped></style>

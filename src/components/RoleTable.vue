@@ -129,7 +129,7 @@ const viewEdit = (data) => {
   // alert('View data \n' + data.id + ', ' + data.name);
 };
 const viewDelete = (data) => {
-  showconfirmdelete(data, deleteRoles, 'Roles With Name');
+  showconfirmdelete(data.id, data.name, deleteRoles, 'Roles With Name');
 };
 //mengekspose function agar function getRoles bisa di jalankan di component parent
 defineExpose({
