@@ -10,6 +10,7 @@ import enc from '@/myencription.js';
 import ex from '@/exception.js';
 import axios from 'axios';
 onMounted(() => {
+  getApiCategory();
   getApiProduct();
 });
 const router = useRouter();
@@ -17,12 +18,12 @@ const route = useRoute();
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
-const filterby = ref('all');
 const isdeleting = ref(false);
 const loading = ref(true);
 const total_rows = ref(0);
+const listCategory = ref([]);
 
-const params = reactive({ current_page: 1, pagesize: 10, search: '', orderby: 'id', ascdesc: 'asc' });
+const params = reactive({ current_page: 1, pagesize: 10, search: '', orderby: 'id', ascdesc: 'asc', categoryby: '', filterby: 'all' });
 const rows = ref(null);
 const manageerror = (error, name) => {
   if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
@@ -46,12 +47,28 @@ const cols =
     { field: 'actions', title: 'Actions', sort: false }
   ]) || [];
 
+const getApiCategory = async () => {
+  try {
+    const responseDataCategory = await axios.get(`${apiurl}/api/categories/list/1000/${branch}`, {
+      headers: {
+        Authorization: token
+      }
+    });
+    const categoryData = responseDataCategory.data.data;
+    listCategory.value = categoryData;
+  } catch (error) {
+    const exception = new ex(error);
+    exception.showError();
+    total_rows.value = 0;
+    rows.value = null;
+  }
+};
 const getApiProduct = async () => {
   try {
     loading.value = true;
 
     const responseData = await axios.get(
-      `${apiurl}/api/products/list/${params.pagesize}/${branch}?orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&perpage=${params.pagesize}`,
+      `${apiurl}/api/products/list/${params.pagesize}/${branch}?orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&categoryby=${params.categoryby}`,
       {
         headers: {
           Authorization: token
@@ -81,7 +98,7 @@ const filterProduct = async () => {
     // convertsearch = params.search.replace(/\s/g, '%20');
     convertsearch = encodeURIComponent(params.search);
     const responseData = await axios.get(
-      `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}&filterby=${filterby.value}`,
+      `${apiurl}/api/products/${branch}/search?orderby=${params.orderby}&key=${convertsearch}&ascdesc=${params.ascdesc}&perpage=${params.pagesize}&page=${params.current_page}&filterby=${params.filterby}&categoryby=${params.categoryby}`,
       {
         headers: {
           Authorization: token
@@ -142,8 +159,8 @@ const viewEdit = (data) => {
   });
   sessionStorage.setItem('paramsid', enc.encrypt(data.id));
 };
-const cekvalue = (e) => {
-  filterby.value = e.target.value;
+const cekvalue = () => {
+  params.current_page = 1;
   filterProduct();
 };
 </script>
@@ -152,25 +169,35 @@ const cekvalue = (e) => {
     <div class="loader"></div>
   </div>
   <div>
-    <div class="row px-3">
-      <div class="form-group d-flex justify-content-center">
-        <label for="filterby" class="pt-2" style="width: 100px">Filter By</label>
-        <select class="form-control" @change="cekvalue">
-          <option value="all" selected>All</option>
-          <option value="barcode">Barcode</option>
-          <option value="name">Name</option>
-          <option value="brands">Brands</option>
-          <option value="price">Price</option>
-          <option value="category">Category</option>
-          <option value="unit">Unit</option>
-          <option value="remaining_stock">Remaining Stock</option>
-          <option value="maxstock">Maxstock</option>
-          <option value="minstock">Minstock</option>
-        </select>
+    <div class="row">
+      <div class="col-lg-6">
+        <div style="max-width: 350px">
+          <div class="form-group d-lg-flex justify-content-center">
+            <label for="categoryby" class="pt-2" style="width: 150px"><p style="font-weight: bold; font-size: 14px">Category By</p></label>
+            <select class="form-control" v-model="params.categoryby" @change="cekvalue">
+              <option value="">All</option>
+              <option :value="category.id" v-for="category in listCategory" :key="category.id">{{ category.name }}</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="row px-3 mb-2" style="margin-top: -20px">
-      <input v-model="params.search" type="text" class="form-control col-lg-3 col-md-4 col-12" placeholder="Search..." />
+    <div class="row" style="margin-top: -20px">
+      <div class="col-lg-6">
+        <div class="form-group d-lg-flex">
+          <label for="searchby" class="pt-2 mr-4" style="width: 80px"><p style="font-weight: bold; font-size: 14px">Search By</p></label>
+          <select class="form-control mr-2" @change="cekvalue" v-model="params.filterby" style="max-width: 100px">
+            <option value="all" selected>All</option>
+            <option value="barcode">Barcode</option>
+            <option value="name">Name</option>
+            <option value="brands">Brands</option>
+            <option value="price">Price</option>
+            <option value="unit">Unit</option>
+            <option value="remaining_stock">Remaining Stock</option>
+          </select>
+          <input v-model="params.search" type="text" class="form-control" style="max-width: 400px" placeholder="Search..." />
+        </div>
+      </div>
     </div>
     <vue3-datatable
       :rows="rows"
