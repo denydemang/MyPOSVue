@@ -1,5 +1,6 @@
 <script setup>
 import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import PurchaseTable from '@/components/PurchaseTable.vue';
 import axios from 'axios';
 import ex from '@/exception.js';
@@ -7,6 +8,7 @@ import { iziSuccess } from '@/izitoast';
 import { ElDialog, ElSkeleton } from 'element-plus';
 import { formatRupiah } from '@/rupiahformatter';
 
+const router = useRouter();
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
@@ -20,6 +22,11 @@ const populateModal = async (data) => {
   let getData = data.data;
   modalDetailItemVisible.value = true;
   getApiItemPurchase(getData);
+};
+const addNewView = () => {
+  router.push({
+    name: 'purchasecreate'
+  });
 };
 
 const getApiItemPurchase = async (data) => {
@@ -92,9 +99,7 @@ const getApiItemPurchase = async (data) => {
           <div class="card card-primary">
             <div class="card-body">
               <div class="d-flex">
-                <button class="btn btn-primary mt-2 mb-4" @click="addNewView('Add New Supplier')" data-toggle="modal" data-target="#modalSupplier">
-                  <i class="fas fa-plus"></i> Add New
-                </button>
+                <button class="btn btn-primary mt-2 mb-4" @click="addNewView()" data-toggle="modal" data-target="#modalSupplier"><i class="fas fa-plus"></i> Add New</button>
               </div>
               <PurchaseTable @view-item="populateModal" />
             </div>

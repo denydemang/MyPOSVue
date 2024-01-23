@@ -1,16 +1,25 @@
 import moment from 'moment';
 
 class MyDate {
-  getfirstdate(format = 'DD/MM/YYYY') {
-    const firstDayOfMonth = moment().startOf('month').format(format);
+  // Set timezone offset   for Jakarta (UTC+7)
+  timeZoneOffset = 7 * 60;
+
+  // Inisiasi Current Time dengan timezone jakarta
+  NOW = moment().utcOffset(this.timeZoneOffset);
+
+  getfirstdate(formatDate = 'DD/MM/YYYY') {
+    const firstDayOfMonth = this.NOW.startOf('month').format(formatDate);
     return firstDayOfMonth;
   }
-  getlastdate(format = 'DD/MM/YYYY') {
-    const lastDayOfMonth = moment().endOf('month').format(format);
+  getlastdate(formatDate = 'DD/MM/YYYY') {
+    const lastDayOfMonth = this.NOW.endOf('month').format(formatDate);
     return lastDayOfMonth;
   }
-  changeformat(dateString, firstformat = 'DD/MM/YYYY', convertedFormat = 'YYYY-MM-DD') {
-    return moment(dateString, firstformat).format(convertedFormat);
+  changeformat(dateString, firstFormatDate = 'DD/MM/YYYY', convertedFormatDate = 'YYYY-MM-DD') {
+    return moment(dateString, firstFormatDate).format(convertedFormatDate);
+  }
+  getCurrentDate(formatDate = 'YYYY-MM-DD') {
+    return this.NOW.format(formatDate);
   }
 }
 

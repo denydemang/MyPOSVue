@@ -102,6 +102,8 @@ const isroleusercreate = ref(false);
 const isroleuseredit = ref(false);
 const ismastersupplier = ref(false);
 const ispurchase = ref(false);
+const ispurchasecreate = ref(false);
+const ispurchaseedit = ref(false);
 const ispurchasereturn = ref(false);
 const ismastercustomer = ref(false);
 const issales = ref(false);
@@ -182,13 +184,23 @@ const isActive = () => {
   } else {
     ispurchase.value = false;
   }
+  if (route.name == 'purchasecreate') {
+    ispurchasecreate.value = true;
+  } else {
+    ispurchasecreate.value = false;
+  }
+  if (route.name == 'purchaseedit') {
+    ispurchaseedit.value = true;
+  } else {
+    ispurchaseedit.value = false;
+  }
   // MENU TRANSACTION - PURCHASE TRANSACTION - PURCHASE RETURN
   if (route.name == 'purchasereturn') {
     ispurchasereturn.value = true;
   } else {
     ispurchasereturn.value = false;
   }
-  if (!ismastersupplier.value && !ispurchase.value && !ispurchasereturn.value) {
+  if (!ismastersupplier.value && !ispurchase.value && !ispurchasecreate.value && !ispurchaseedit.value && !ispurchasereturn.value) {
     $('.dropdwonpurchasetrans').stop(true, true).slideUp();
   }
   // SALES TRANSACTION
@@ -299,11 +311,19 @@ onBeforeUnmount(async () => {
         <router-link :to="{ name: 'admin' }">{{ appinitialtitle }}</router-link>
       </div>
       <ul class="sidebar-menu">
+        <!-- Dashboard -->
         <li class="menu-header" v-if="viewmenu.dashboard">Dashboard</li>
         <li class="nav-item" :class="{ active: isadmin }" v-if="viewmenu.dashboard">
           <router-link class="nav-link" :to="{ name: 'admin' }"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></router-link>
         </li>
+        <!-- End Dashboard -->
+
+        <!-- Master menu -->
+        <!--  Master Menu Header -->
         <li class="menu-header" v-if="viewmenu.master_category || viewmenu.master_item || viewmenu.master_user || viewmenu.role_user">Master</li>
+        <!-- End Master Menu Header -->
+
+        <!-- Master Menu - Product Management -->
         <li
           class="nav-item dropdown"
           v-if="viewmenu.master_category || viewmenu.master_item"
@@ -317,9 +337,11 @@ onBeforeUnmount(async () => {
             <li :class="{ active: ismasterproduct || ismasterproductcreate || ismasterproductedit }" v-if="viewmenu.master_item">
               <router-link class="nav-link" :to="{ name: 'masterproduct' }">Master Item/Product</router-link>
             </li>
-            <!-- <li><a class="nav-link" href="layout-top-navigation.html">Top Navigation</a></li> -->
           </ul>
         </li>
+        <!-- End Master Menu - Product Management -->
+
+        <!-- Master Menu - User Management -->
         <li class="nav-item dropdown" :class="{ active: ismasteruser || isroleuser || isroleusercreate || isroleuseredit }" v-if="viewmenu.master_user || viewmenu.role_user">
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-user-friends"></i> <span>User Management</span></a>
           <ul class="dropdown-menu dropdownusermanagement">
@@ -329,15 +351,23 @@ onBeforeUnmount(async () => {
             </li>
           </ul>
         </li>
+        <!-- End Master Menu - User Management -->
+        <!-- End Master Menu -->
+
+        <!-- Transaction Menu -->
+        <!-- Transaction Menu Header -->
         <li
           class="menu-header"
           v-if="viewmenu.master_supplier || viewmenu.purchase || viewmenu.purchase_return || viewmenu.master_customer || viewmenu.sales || viewmenu.sales_return"
         >
           Transaction
         </li>
+        <!-- End Transaction Menu Header -->
+
+        <!-- Transaction Menu - Purchase-->
         <li
           class="nav-item dropdown"
-          :class="{ active: ismastersupplier | ispurchase | ispurchasereturn }"
+          :class="{ active: ismastersupplier | ispurchase | ispurchasecreate | ispurchaseedit | ispurchasereturn }"
           v-if="viewmenu.master_supplier || viewmenu.purchase || viewmenu.purchase_return"
         >
           <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="far fa-file-alt"></i> <span>Purchase Transaction</span></a>
@@ -345,12 +375,17 @@ onBeforeUnmount(async () => {
             <li :class="{ active: ismastersupplier }" v-if="viewmenu.master_supplier">
               <RouterLink class="nav-link" :to="{ name: 'mastersupplier' }">Master Supplier</RouterLink>
             </li>
-            <li :class="{ active: ispurchase }" v-if="viewmenu.purchase"><RouterLink class="nav-link" :to="{ name: 'purchase' }">Purchase</RouterLink></li>
+            <li :class="{ active: ispurchase | ispurchasecreate | ispurchaseedit }" v-if="viewmenu.purchase">
+              <RouterLink class="nav-link" :to="{ name: 'purchase' }">Purchase</RouterLink>
+            </li>
             <li :class="{ active: ispurchasereturn }" v-if="viewmenu.purchase_return">
               <RouterLink class="nav-link" :to="{ name: 'purchasereturn' }">Purchase Return</RouterLink>
             </li>
           </ul>
         </li>
+        <!-- End Transaction Menu - Purchase -->
+
+        <!-- Transaction Menu - Sales -->
         <li class="nav-item dropdown" :class="{ active: ismastercustomer | issales | issalesreturn }" v-if="viewmenu.master_customer || viewmenu.sales || viewmenu.sales_return">
           <a href="#" class="nav-link has-dropdown"><i class="fas fa-th-large"></i> <span>Sales Transaction</span></a>
           <ul class="dropdown-menu dropdwonsalestrans">
@@ -361,6 +396,10 @@ onBeforeUnmount(async () => {
             <li :class="{ active: issalesreturn }" v-if="viewmenu.sales_return"><RouterLink class="nav-link" :to="{ name: 'salesreturn' }">Sales Return</RouterLink></li>
           </ul>
         </li>
+        <!-- End Transaction Menu - Sales -->
+        <!-- End Transaction Menu -->
+
+        <!-- Inventory Menu -->
         <li class="menu-header" v-if="viewmenu.grn || viewmenu.stock">Inventory</li>
         <li class="nav-item" :class="{ active: isgrn }" v-if="viewmenu.grn">
           <RouterLink :to="{ name: 'grn' }" class="nav-link"><i class="far fa-user"></i> <span>Goods Receive Notes</span></RouterLink>
@@ -372,6 +411,8 @@ onBeforeUnmount(async () => {
         <li class="nav-item" :class="{ active: iscompanyprofile }" v-if="viewmenu.company_profiles">
           <RouterLink :to="{ name: 'companyprofileadmin' }" class="nav-link"><i class="far fa-user"></i> <span>Company Profiles</span></RouterLink>
         </li>
+        <!-- End Inventory Menu -->
+
         <li class="menu-header">Reports</li>
       </ul>
     </aside>

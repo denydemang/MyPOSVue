@@ -10,6 +10,7 @@ import RoleUser from '@/views/admin/master/RoleUser.vue';
 import RoleUserManage from '@/views/admin/master/RoleUserManage.vue';
 import MasterSupplier from '@/views/admin/transaction/purchase/MasterSupplier.vue';
 import Purchase from '@/views/admin/transaction/purchase/Purchase.vue';
+import PurchaseManage from '@/views/admin/transaction/purchase/PurchaseManage.vue';
 import PurchaseReturn from '@/views/admin/transaction/purchase/PurchaseReturn.vue';
 import MasterCustomer from '@/views/admin/transaction/sales/MasterCustomer.vue';
 import Sales from '@/views/admin/transaction/sales/Sales.vue';
@@ -17,11 +18,9 @@ import SalesReturn from '@/views/admin/transaction/sales/SalesReturn.vue';
 import GRN from '@/views/admin/inventory/GRN.vue';
 import INOUTITEM from '@/views/admin/inventory/INOUTITEM.vue';
 import Page404 from '@/views/Page404.vue';
-import CompanyProfile from '@/views/CompanyProfile.vue'
-import CompanyProfileAdmin from '@/views/admin/settings/CompanyProfiles.vue'
+import CompanyProfile from '@/views/CompanyProfile.vue';
+import CompanyProfileAdmin from '@/views/admin/settings/CompanyProfiles.vue';
 import Login from '@/views/Login.vue';
-
-
 
 const routes = [
   {
@@ -52,7 +51,6 @@ const routes = [
         name: 'admin',
         component: DashboardView,
         meta: {
-          
           title: 'ADMIN DASHBOARD'
         }
       },
@@ -61,7 +59,6 @@ const routes = [
         name: 'mastercategory',
         component: MasterCategory,
         meta: {
-          
           title: 'MASTER CATEGORY'
         }
       },
@@ -70,7 +67,6 @@ const routes = [
         name: 'masterproduct',
         component: MasterProduct,
         meta: {
-          
           title: 'MASTER PRODUCT/ITEM'
         }
       },
@@ -79,7 +75,6 @@ const routes = [
         name: 'masterproductcreate',
         component: MasterProductManage,
         meta: {
-          
           title: 'ADD MASTER PRODUCT/ITEM'
         }
       },
@@ -88,7 +83,6 @@ const routes = [
         name: 'masterproductedit',
         component: MasterProductManage,
         meta: {
-          
           title: 'EDIT MASTER PRODUCT/ITEM'
         }
       },
@@ -97,7 +91,6 @@ const routes = [
         name: 'masteruser',
         component: MasterUser,
         meta: {
-          
           title: 'MASTER USER'
         }
       },
@@ -106,7 +99,6 @@ const routes = [
         name: 'roleuser',
         component: RoleUser,
         meta: {
-          
           title: 'ROLE USER'
         }
       },
@@ -131,7 +123,6 @@ const routes = [
         name: 'mastersupplier',
         component: MasterSupplier,
         meta: {
-          
           title: 'MASTER SUPPLIER'
         }
       },
@@ -140,8 +131,15 @@ const routes = [
         name: 'purchase',
         component: Purchase,
         meta: {
-          
           title: 'PURCHASE TRANSACTION'
+        }
+      },
+      {
+        path: 'purchase/create',
+        name: 'purchasecreate',
+        component: PurchaseManage,
+        meta: {
+          title: 'ADD NEW PURCHASE TRANSACTION'
         }
       },
       {
@@ -149,7 +147,6 @@ const routes = [
         name: 'purchasereturn',
         component: PurchaseReturn,
         meta: {
-          
           title: 'PURCHASE RETURN TRANSACTION'
         }
       },
@@ -158,7 +155,6 @@ const routes = [
         name: 'mastercustomer',
         component: MasterCustomer,
         meta: {
-          
           title: 'MASTER CUSTOMER'
         }
       },
@@ -167,7 +163,6 @@ const routes = [
         name: 'sales',
         component: Sales,
         meta: {
-          
           title: 'SALES TRANSACTION'
         }
       },
@@ -176,7 +171,6 @@ const routes = [
         name: 'salesreturn',
         component: SalesReturn,
         meta: {
-          
           title: 'SALES RETURN TRANSACTION'
         }
       },
@@ -185,7 +179,6 @@ const routes = [
         name: 'grn',
         component: GRN,
         meta: {
-          
           title: 'GOODS RECEIVES NOTE'
         }
       },
@@ -194,7 +187,6 @@ const routes = [
         name: 'inoutitem',
         component: INOUTITEM,
         meta: {
-          
           title: 'IN OUT ITEM TRANSACTION'
         }
       },
@@ -203,7 +195,6 @@ const routes = [
         name: 'companyprofileadmin',
         component: CompanyProfileAdmin,
         meta: {
-          
           title: 'EDIT COMPANY PROFILES'
         }
       }
@@ -214,7 +205,6 @@ const routes = [
     name: 'companyprofile',
     component: CompanyProfile,
     meta: {
-      
       title: 'Register Company Profile'
     }
   },
@@ -223,7 +213,6 @@ const routes = [
     name: 'notfound',
     component: Page404,
     meta: {
-      
       title: '404 NOT FOUND'
     }
   },
@@ -232,7 +221,6 @@ const routes = [
     name: 'notfoundthrow',
     component: Page404,
     meta: {
-      
       title: '404 NOT FOUND'
     }
   }

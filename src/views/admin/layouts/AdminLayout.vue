@@ -49,6 +49,12 @@ const checkauth = async (nameroute) => {
     case 'purchase':
       name = 'purchase';
       break;
+    case 'purchasecreate':
+      name = 'purchase';
+      break;
+    case 'purchaseedit':
+      name = 'purchase';
+      break;
     case 'purchasereturn':
       name = 'purchase_return';
       break;
