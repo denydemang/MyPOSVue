@@ -2,7 +2,7 @@
 import { onMounted, ref, reactive, onUnmounted, onBeforeMount, handleError } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
-import { formatRupiah } from '@/rupiahformatter';
+import { formatRupiah1 } from '@/rupiahformatter';
 import { showerror } from '@/jqueryconfirm.js';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
@@ -65,15 +65,16 @@ const total_rows = ref(0);
 const rows = ref(null);
 const cols =
   ref([
-    { field: 'barcode', title: 'Barcode', isUnique: true },
-    { field: 'name', title: 'Name', sort: true },
-    { field: 'category', title: 'Category', sort: true },
-    { field: 'qty', title: 'Qty', sort: true },
-    { field: 'id_unit', title: 'Unit', sort: true },
-    { field: 'price', title: 'Price', sort: true },
-    { field: 'total', title: 'Total', sort: true },
-    { field: 'discount', title: 'Discount', sort: true },
-    { field: 'sub_total', title: 'Sub Total' }
+    { field: 'barcode', title: 'Barcode', isUnique: true, width: '10%' },
+    { field: 'name', title: 'Name', width: '19%' },
+    { field: 'category', title: 'Category', width: '12%' },
+    { field: 'qty', title: 'Qty', width: '4%' },
+    { field: 'id_unit', title: 'Unit', width: '5%' },
+    { field: 'price', title: 'Price', width: '10%' },
+    { field: 'total', title: 'Total', width: '15%' },
+    { field: 'discount', title: 'Discount', width: '6%' },
+    { field: 'sub_total', title: 'Sub Total', width: '15%' },
+    { field: 'actions', title: '#', width: '5%' }
   ]) || [];
 
 // ---------------------------------------
@@ -102,10 +103,10 @@ function setupDefaultInterfaceItems() {
   interfaceitems.value.category = '';
   interfaceitems.value.id_unit = '';
   interfaceitems.value.qty = 0;
-  interfaceitems.value.price = 0.0;
-  interfaceitems.value.total = 0.0;
-  interfaceitems.value.discount = 0.0;
-  interfaceitems.value.sub_total = 0.0;
+  interfaceitems.value.price = 'Rp 0,00';
+  interfaceitems.value.total = 'Rp 0,00';
+  interfaceitems.value.discount = 'Rp 0,00';
+  interfaceitems.value.sub_total = 'Rp 0,00';
   interfaceitems.value.remaining_stock = 0;
 }
 
@@ -116,10 +117,10 @@ function populateInterfaceItems(dataItem = {}) {
   interfaceitems.category = dataItem.category;
   interfaceitems.id_unit = dataItem.unit;
   interfaceitems.qty = 1;
-  interfaceitems.price = 0.0;
-  interfaceitems.total = 0.0;
-  interfaceitems.discount = 0.0;
-  interfaceitems.sub_total = 0.0;
+  interfaceitems.price = 'Rp 0,00';
+  interfaceitems.total = 'Rp 0,00';
+  interfaceitems.discount = 'Rp 0,00';
+  interfaceitems.sub_total = 'Rp 0,00';
   interfaceitems.remaining_stock = 0.0;
 }
 
@@ -203,7 +204,7 @@ function updateItems(barcode, e, columnName) {
     case 'price':
       const updatedtItemsPrice = postPurchaseData.items.map((item) => {
         if (item.barcode === barcode) {
-          return { ...item, price: amount };
+          return { ...item, price: parseToRupiah(amount) };
         } else {
           return item;
         }
@@ -213,7 +214,7 @@ function updateItems(barcode, e, columnName) {
     case 'discount':
       const updatedtItemsDiscount = postPurchaseData.items.map((item) => {
         if (item.barcode === barcode) {
-          return { ...item, discount: amount };
+          return { ...item, discount: parseToRupiah(amount) };
         } else {
           return item;
         }
@@ -227,14 +228,58 @@ function updateItems(barcode, e, columnName) {
   refreshGrid();
 }
 
+function onlyNumberAndDot(value) {
+  return value.replace(/[^0-9.]/g, '');
+}
+
+function parseToRupiah(value) {
+  return formatRupiah1(value).toString();
+}
+
+function eliminateNonNumerikalInput(e) {
+  e.target.value = onlyNumberAndDot(e.target.value);
+}
+
+function parseToFloat(value) {
+  if (typeof value == 'string') {
+    // Menghapus karakter non-digit dan non-titik
+    var cleanInput = value.replace(/[^\d,.]/g, '');
+
+    // Mengganti koma menjadi titik
+    var dotFormatted = cleanInput.replace(',', '.');
+
+    // Menghapus karakter titik tambahan
+    var finalResult = dotFormatted.replace(/\.(?=.*\.)/g, '');
+
+    return parseFloat(finalResult);
+  } else {
+    return parseFloat(value);
+  }
+}
+
+function startInput(e) {
+  e.target.value = parseToFloat(e.target.value) === 0 ? '' : parseToFloat(e.target.value);
+}
+
+function deleteItem(barcode) {
+  const filteredItems = [...postPurchaseData.items].filter((item) => item.barcode !== barcode);
+  postPurchaseData.items = [...filteredItems];
+  refreshGrid();
+}
+
 function calculateItems() {
   const calculatedItemsTotal = postPurchaseData.items.map((item) => {
-    return { ...item, total: item.qty * item.price };
+    let calcTotal = parseToFloat(item.qty) * parseToFloat(item.price);
+    return { ...item, total: parseToRupiah(calcTotal) };
   });
 
   postPurchaseData.items = [...calculatedItemsTotal];
   const calculatedItemsSubtotal = postPurchaseData.items.map((item) => {
-    return { ...item, sub_total: item.total - item.discount };
+    let calcSub_total = parseToFloat(item.total) - parseToFloat(item.discount);
+    if (calcSub_total < 0) {
+      calcSub_total = 0;
+    }
+    return { ...item, sub_total: parseToRupiah(calcSub_total) };
   });
   postPurchaseData.items = [...calculatedItemsSubtotal];
 }
@@ -390,6 +435,7 @@ onMounted(() => {});
                       <i class="fas fa-barcode"></i>
                     </div>
                     <input type="text" class="form-control" style="width: 100%" v-model="postPurchaseData.barcode" @keyup.enter="getApiProductbyBarcode" />
+                    <button type="button" class="btn btn--primary" @click="getApiProductbyBarcode"><i class="fas fa-cart-plus"></i></button>
                     <button type="button" class="btn btn--primary"><i class="fas fa-search"></i></button>
                     <button type="button" class="btn btn--primary"><i class="fas fa-plus"></i></button>
                   </div>
@@ -420,13 +466,36 @@ onMounted(() => {});
               <!-- Slots Vue 3 Datatabble -->
               <vue3-datatable :loading="loading" :rows="rows" :columns="cols" height="300px" :stickyHeader="true" :showNumbers="false">
                 <template #qty="data">
-                  <input type="number" :value="data.value.qty" @focusout="updateItems(data.value.barcode, $event, 'qty')" />
+                  <input
+                    type="number"
+                    :value="data.value.qty"
+                    @focusin="startInput($event)"
+                    style="max-width: 60px !important"
+                    @focusout="updateItems(data.value.barcode, $event, 'qty')"
+                  />
                 </template>
                 <template #price="data">
-                  <input type="number" :value="data.value.price" @focusout="updateItems(data.value.barcode, $event, 'price')" />
+                  <input
+                    style="max-width: 120px"
+                    type="text"
+                    :value="data.value.price"
+                    @focusin="startInput($event)"
+                    @keyup="eliminateNonNumerikalInput($event)"
+                    @focusout="updateItems(data.value.barcode, $event, 'price')"
+                  />
                 </template>
                 <template #discount="data">
-                  <input type="number" :value="data.value.discount" @focusout="updateItems(data.value.barcode, $event, 'discount')" />
+                  <input
+                    type="text"
+                    style="max-width: 100px"
+                    :value="data.value.discount"
+                    @focusin="startInput($event)"
+                    @keyup="eliminateNonNumerikalInput($event)"
+                    @focusout="updateItems(data.value.barcode, $event, 'discount')"
+                  />
+                </template>
+                <template #actions="data">
+                  <button class="btn btn-danger" @click="deleteItem(data.value.barcode)">X</button>
                 </template>
               </vue3-datatable>
             </div>
