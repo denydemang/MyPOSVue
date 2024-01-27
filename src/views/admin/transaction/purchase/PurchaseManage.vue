@@ -34,8 +34,17 @@ const postPurchaseData = reactive({
   payment_term: '',
   ppn: 0.0,
   grand_total: 0.0,
+  isppn: false,
   is_credit: null,
   items: []
+});
+
+const transAmount = ref({
+  total: 'Rp 0,00',
+  other_fee: 'Rp 0,00',
+  ppn: 'Rp 0,00',
+  percent_ppn: 0,
+  grand_total: 'Rp 0,00'
 });
 const listCacheItems = ref([]);
 const validation = ref({
@@ -257,8 +266,29 @@ function parseToFloat(value) {
   }
 }
 
+function calcPPn() {
+  let other_fee = parseToFloat(transAmount.value.other_fee);
+  let total = parseToFloat(transAmount.value.total);
+  let totalppn = (transAmount.value.percent_ppn / 100) * (other_fee + total);
+
+  console.log(totalppn);
+  transAmount.value.ppn = parseToRupiah(parseToFloat(totalppn));
+}
+
 function startInput(e) {
   e.target.value = parseToFloat(e.target.value) === 0 ? '' : parseToFloat(e.target.value);
+}
+
+function checklistppn() {
+  let isppn = postPurchaseData.isppn;
+
+  if (!isppn) {
+    transAmount.value.percent_ppn = 0;
+    transAmount.value.ppn = parseToRupiah(0);
+  } else {
+    transAmount.value.percent_ppn = 11;
+  }
+  calculateAmountTrans();
 }
 
 function deleteItem(barcode) {
@@ -282,6 +312,39 @@ function calculateItems() {
     return { ...item, sub_total: parseToRupiah(calcSub_total) };
   });
   postPurchaseData.items = [...calculatedItemsSubtotal];
+  calculateAmountTrans();
+}
+
+function updateAmountTrans(e, fieldName) {
+  let value = parseFloat(e.target.value);
+
+  switch (fieldName) {
+    case 'otherfee':
+      transAmount.value.other_fee = parseToRupiah(value);
+      break;
+
+    default:
+      break;
+  }
+  calculateAmountTrans();
+}
+
+function calculateAmountTrans() {
+  let total = 0;
+  let other_fee = parseToFloat(transAmount.value.other_fee);
+  let grand_total = 0;
+  let purchaseItems = [...postPurchaseData.items];
+
+  purchaseItems.forEach((item) => {
+    total += parseToFloat(item.sub_total);
+  });
+
+  transAmount.value.total = parseToRupiah(parseToFloat(total));
+  transAmount.value.other_fee = parseToRupiah(other_fee);
+  calcPPn();
+  let ppn = parseToFloat(transAmount.value.ppn);
+  grand_total = total + other_fee + ppn;
+  transAmount.value.grand_total = parseToRupiah(parseToFloat(grand_total));
 }
 
 function clearBarcode() {
@@ -449,7 +512,7 @@ onMounted(() => {});
             <div class="card-body py-0">
               <div class="form-group row mt-3">
                 <label class="mr-5" style="font-size: 30px; font-weight: bold">Grand Total :</label>
-                <label class="text-primary" style="font-size: 30px; font-weight: bold">Rp 250.000</label>
+                <label class="text-primary" style="font-size: 30px; font-weight: bold">{{ transAmount.grand_total }}</label>
               </div>
             </div>
           </div>
@@ -504,20 +567,40 @@ onMounted(() => {});
       </div>
       <!-- END ITEMS SECTION -->
       <div class="row">
-        <div class="col-lg-4 offset-lg-8">
+        <div class="col-lg-5 offset-lg-7">
           <div class="card card-danger">
             <div class="card-body">
               <div class="form-group row">
                 <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Total</label>
-                <input type="text" class="form-control col-lg-9" />
+                <input type="text" class="form-control col-lg-9" :value="transAmount.total" style="font-size: 18px; font-weight: bold" readonly />
               </div>
               <div class="form-group row">
                 <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Other Fee</label>
-                <input type="text" class="form-control col-lg-9" />
+                <input
+                  type="text"
+                  class="form-control col-lg-9"
+                  v-model="transAmount.other_fee"
+                  @keyup="eliminateNonNumerikalInput($event)"
+                  @focusin="startInput($event)"
+                  @focusout="updateAmountTrans($event, 'otherfee')"
+                  @abort="updateAmountTrans($event, 'otherfee')"
+                  style="font-size: 18px; font-weight: bold"
+                />
               </div>
               <div class="form-group row">
-                <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Ppn</label>
-                <input type="text" class="form-control col-lg-9" />
+                <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3"
+                  >Ppn <input type="checkbox" v-model="postPurchaseData.isppn" @change="checklistppn()" style="font-size: 18px; font-weight: bold"
+                /></label>
+                <input
+                  type="number"
+                  class="form-control col-lg-2"
+                  @change="calculateAmountTrans()"
+                  style="font-size: 18px; font-weight: bold"
+                  :readonly="!postPurchaseData.isppn"
+                  v-model="transAmount.percent_ppn"
+                />
+                <label class="col-lg-1 pt-1" style="font-size: 18px">%</label>
+                <input type="text" class="form-control col-lg-6" readonly v-model="transAmount.ppn" style="font-size: 18px; font-weight: bold" />
               </div>
             </div>
           </div>
