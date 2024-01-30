@@ -99,7 +99,7 @@ const getApiItemPurchase = async (data) => {
           <div class="card card-primary">
             <div class="card-body">
               <div class="d-flex">
-                <button class="btn btn-primary mt-2 mb-4" @click="addNewView()" data-toggle="modal" data-target="#modalSupplier"><i class="fas fa-plus"></i> Add New</button>
+                <button class="btn btn-primary mt-2 mb-4" @click="addNewView"><i class="fas fa-plus"></i> Add New</button>
               </div>
               <PurchaseTable @view-item="populateModal" />
             </div>

@@ -9,6 +9,9 @@ import '@bhplugin/vue3-datatable/dist/style.css';
 import myencription from '@/myencription.js';
 import MyDate from '@/mydate';
 import ex from '@/exception.js';
+import flatPickr from 'vue-flatpickr-component';
+import 'flatpickr/dist/flatpickr.css';
+import ModalSearchSupplier from '@/components/ModalSearchSupplier.vue';
 
 // PROPERTY
 // ------------------------------------
@@ -19,15 +22,23 @@ const isfetchingdata = ref(false);
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 const iduser = myencription.decrypt(localStorage.getItem('id'));
+const username = myencription.decrypt(localStorage.getItem('username'));
+const role = myencription.decrypt(localStorage.getItem('role_name'));
+const name = myencription.decrypt(localStorage.getItem('name'));
 const token = localStorage.getItem('token');
 const namesession = ref('');
+
+const ModalScSupplier = ref(null);
 
 const postPurchaseData = reactive({
   branchcode: '',
   trans_date: '',
   barcode: '',
   id_user: '',
+  username: '',
+  name: '',
   role: '',
+  supplier_no: '',
   supplier_name: '',
   total: 0.0,
   other_fee: 0.0,
@@ -67,6 +78,17 @@ const interfaceitems = {
   remaining_stock: 0
 };
 
+// Property FlatPickr
+// ----------------------------------
+const config = ref({
+  wrap: true, // set wrap to true only when using 'input-group'
+  altFormat: 'd/m/Y',
+  altInput: true,
+  dateFormat: 'd/m/Y'
+});
+
+// -------------------------------------
+
 // Property  untuk vue3 Datatable
 // -------------------------------------
 const loading = ref(false);
@@ -87,6 +109,7 @@ const cols =
   ]) || [];
 
 // ---------------------------------------
+// -------------------------------------------
 
 // METHOD AND SUBROUTINE
 // -------------------------------------------
@@ -96,7 +119,9 @@ function setupDefaultPostData() {
   postPurchaseData.barcode = '';
   postPurchaseData.is_credit = true;
   postPurchaseData.id_user = iduser;
-  postPurchaseData.role = '';
+  postPurchaseData.username = username;
+  postPurchaseData.role = role;
+  postPurchaseData.name = name;
   postPurchaseData.supplier_name = '';
   postPurchaseData.total = 0.0;
   postPurchaseData.other_fee = 0.0;
@@ -271,7 +296,6 @@ function calcPPn() {
   let total = parseToFloat(transAmount.value.total);
   let totalppn = (transAmount.value.percent_ppn / 100) * (other_fee + total);
 
-  console.log(totalppn);
   transAmount.value.ppn = parseToRupiah(parseToFloat(totalppn));
 }
 
@@ -402,13 +426,30 @@ async function getApiProductbyBarcode() {
   }
   clearBarcode();
 }
+// ---------------------------------------------
 
-//---------------------------------------------
+// Event dan Method relasi child dan parent
+// ---------------------------------------------
+function showFormSearch() {
+  ModalScSupplier.value.getSupplier();
+}
+
+function populateFieldSupplier(supplierData) {
+  postPurchaseData.supplier_no = supplierData.number_id;
+  postPurchaseData.supplier_name = supplierData.name;
+}
+function getDataModal(data) {
+  populateFieldSupplier(data);
+}
+
+// ----------------------------------------------
 
 // Life Cycle Hooks
 // --------------------------------------------
 
-onMounted(() => {});
+onMounted(() => {
+  setupDefaultPostData();
+});
 
 // ------------------------------------------
 </script>
@@ -427,21 +468,31 @@ onMounted(() => {});
                 <div class="col-lg-6">
                   <div class="form-group">
                     <label for="trans_no">Transaction Number</label>
-                    <input type="text" class="form-control" id="trans_no" value="AUTO" disabled />
+                    <input type="text" class="form-control defaultInptStyle" id="trans_no" value="AUTO" disabled />
                   </div>
                   <div class="form-group">
                     <label for="trans_date">Transaction Date</label>
-                    <input type="text" class="form-control" id="trans_date" />
+                    <flatPickr class="form-control defaultInptStyle" :config="config" v-model="postPurchaseData.trans_date"></flatPickr>
                   </div>
                 </div>
                 <div class="col-lg-6">
                   <div class="form-group">
                     <label for="Supplier">ID Supplier</label>
-                    <input type="text" class="form-control" id="Supplier" />
+                    <div class="input-group">
+                      <div class="input-group-append">
+                        <input type="text" class="form-control defaultInptStyle" readonly id="Supplier" v-model="postPurchaseData.supplier_no" />
+                        <button class="input-group-text" style="cursor: pointer" @click="showFormSearch" title="Search Supplier" data-toggle="modal" data-target="#modalSupplier">
+                          <i class="fas fa-search"></i>
+                        </button>
+                        <button class="input-group-text" style="cursor: pointer" title="Add New Supplier" @click="router.push({ name: 'mastersupplier' })">
+                          <i class="fas fa-user-plus"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div class="form-group">
                     <label for="Supplier">Supplier Name</label>
-                    <input type="text" class="form-control" id="Supplier" />
+                    <input type="text" class="form-control defaultInptStyle" readonly id="Supplier" v-model="postPurchaseData.supplier_name" />
                   </div>
                 </div>
               </div>
@@ -455,17 +506,17 @@ onMounted(() => {});
                 <div class="col-lg-6">
                   <div class="form-group">
                     <label for="username">Pic User</label>
-                    <input type="text" class="form-control" id="username" value="SEKAR999" disabled />
+                    <input type="text" class="form-control defaultInptStyle" id="username" v-model="postPurchaseData.username" disabled />
                   </div>
                   <div class="form-group">
                     <label for="pic_name">Pic Name</label>
-                    <input type="text" class="form-control" id="pic_name" />
+                    <input type="text" class="form-control defaultInptStyle" disabled v-model="postPurchaseData.name" id="pic_name" />
                   </div>
                 </div>
                 <div class="col-lg-6">
                   <div class="form-group">
                     <label for="role">Role</label>
-                    <input type="text" class="form-control" id="role" />
+                    <input type="text" class="form-control defaultInptStyle" disabled id="role" v-model="postPurchaseData.role" />
                   </div>
                   <div class="form-group">
                     <label for=""> Payment</label>
@@ -497,7 +548,7 @@ onMounted(() => {});
                     <div class="input-group-text">
                       <i class="fas fa-barcode"></i>
                     </div>
-                    <input type="text" class="form-control" style="width: 100%" v-model="postPurchaseData.barcode" @keyup.enter="getApiProductbyBarcode" />
+                    <input type="text" class="form-control defaultInptStyle" style="width: 100%" v-model="postPurchaseData.barcode" @keyup.enter="getApiProductbyBarcode" />
                     <button type="button" class="btn btn--primary" @click="getApiProductbyBarcode"><i class="fas fa-cart-plus"></i></button>
                     <button type="button" class="btn btn--primary"><i class="fas fa-search"></i></button>
                     <button type="button" class="btn btn--primary"><i class="fas fa-plus"></i></button>
@@ -572,35 +623,34 @@ onMounted(() => {});
             <div class="card-body">
               <div class="form-group row">
                 <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Total</label>
-                <input type="text" class="form-control col-lg-9" :value="transAmount.total" style="font-size: 18px; font-weight: bold" readonly />
+                <input type="text" class="form-control col-lg-9 defaultInptStyle" :value="transAmount.total" readonly />
               </div>
               <div class="form-group row">
                 <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Other Fee</label>
                 <input
                   type="text"
-                  class="form-control col-lg-9"
+                  class="form-control col-lg-9 defaultInptStyle"
                   v-model="transAmount.other_fee"
                   @keyup="eliminateNonNumerikalInput($event)"
                   @focusin="startInput($event)"
                   @focusout="updateAmountTrans($event, 'otherfee')"
                   @abort="updateAmountTrans($event, 'otherfee')"
-                  style="font-size: 18px; font-weight: bold"
                 />
               </div>
               <div class="form-group row">
                 <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3"
-                  >Ppn <input type="checkbox" v-model="postPurchaseData.isppn" @change="checklistppn()" style="font-size: 18px; font-weight: bold"
+                  >Ppn <input type="checkbox" v-model="postPurchaseData.isppn" @change="checklistppn()"
                 /></label>
                 <input
                   type="number"
-                  class="form-control col-lg-2"
+                  class="form-control col-lg-2 defaultInptStyle"
                   @change="calculateAmountTrans()"
                   style="font-size: 18px; font-weight: bold"
                   :readonly="!postPurchaseData.isppn"
                   v-model="transAmount.percent_ppn"
                 />
                 <label class="col-lg-1 pt-1" style="font-size: 18px">%</label>
-                <input type="text" class="form-control col-lg-6" readonly v-model="transAmount.ppn" style="font-size: 18px; font-weight: bold" />
+                <input type="text" class="form-control col-lg-6 defaultInptStyle" readonly v-model="transAmount.ppn" />
               </div>
             </div>
           </div>
@@ -608,4 +658,14 @@ onMounted(() => {});
       </div>
     </section>
   </div>
+
+  <!-- Modal Form -->
+  <ModalSearchSupplier ref="ModalScSupplier" @modalDataSupplier="getDataModal" />
 </template>
+
+<style scoped>
+.defaultInptStyle {
+  font-size: 18px;
+  font-weight: bold;
+}
+</style>

@@ -11,10 +11,11 @@ const branch = process.env.VUE_APP_BRANCH;
 
 const token = localStorage.getItem('token');
 const isdeleting = ref(false);
-const loading = ref(true);
+const loading = ref(false);
 const total_rows = ref(0);
 
 const params = reactive({ current_page: 1, pagesize: 10, search: '' });
+const emit = defineEmits(['modalDataSupplier']);
 const rows = ref(null);
 const cols =
   ref([
@@ -43,6 +44,7 @@ const getSupplier = async () => {
     dataSupplier.forEach((obj, key) => {
       obj.no = counter++;
     });
+    console.log(dataSupplier);
     let totalAllRows = responseData.data.meta.total;
     total_rows.value = totalAllRows;
     rows.value = dataSupplier;
@@ -53,13 +55,66 @@ const getSupplier = async () => {
 
   loading.value = false;
 };
+
+const filterSupplier = async () => {
+  try {
+    loading.value = true;
+    let convertsearch = '';
+    // convertsearch = params.search.replace(/\s/g, '%20');
+    convertsearch = encodeURIComponent(params.search);
+
+    const responseData = await axios.get(`${apiurl}/api/suppliers/${branch}/search?key=${convertsearch}&perpage=${params.pagesize}&page=${params.current_page}`, {
+      headers: {
+        Authorization: token
+      }
+    });
+    let dataCategory = responseData.data.data;
+    let totalAllRows = responseData.data.meta.total;
+    total_rows.value = totalAllRows;
+    // Inisialisasi nilai awal untuk counter
+    let counter = params.current_page * params.pagesize - params.pagesize + 1;
+
+    // Menambahkan properti 'no' dengan nilai increment pada setiap objek
+    dataCategory.forEach((obj, key) => {
+      obj.no = counter++;
+    });
+    rows.value = dataCategory;
+  } catch (error) {
+    const exception = new ex(error);
+    exception.showError();
+  }
+
+  loading.value = false;
+};
+
+const selectSupplier = (data) => {
+  emit('modalDataSupplier', data);
+  $('#modalSupplier').modal('hide');
+};
+
+$(document).ready(function () {
+  $('#modalSupplier').on('hidden.bs.modal', function (e) {
+    params.search = '';
+  });
+});
+//Jika perubahan yang terjadi pada table seprti mengklik pagination mengubah jumlah row dll
+const changeServer = (data) => {
+  params.current_page = data.current_page;
+  params.pagesize = data.pagesize;
+  params.search = data.search;
+  filterSupplier();
+};
+
+defineExpose({
+  getSupplier
+});
 </script>
 <template>
   <div class="modal fade" id="modalSupplier" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+          <h5 class="modal-title" id="exampleModalLabel">Search Supplier</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -82,7 +137,7 @@ const getSupplier = async () => {
           >
             <template #actions="data">
               <div>
-                <button type="button" data-toggle="modal" data-target="#modalSupplier" class="btn btn-success btn-sm"><i class="fas fa-edit"></i> Pilih</button>
+                <button type="button" class="btn btn-success btn-sm" @click="selectSupplier(data.value)"><i class="fas fa-check"></i> Pilih</button>
               </div>
             </template>
           </vue3-datatable>

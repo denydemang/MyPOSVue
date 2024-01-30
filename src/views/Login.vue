@@ -84,6 +84,7 @@ const postUSER = async () => {
     localStorage.setItem('branchcode', myenc.encrypt(userdata.branchcode.toString(), ''));
     localStorage.setItem('name', myenc.encrypt(userdata.name.toString(), ''));
     localStorage.setItem('role', myenc.encrypt(userdata.role.toString(), ''));
+    localStorage.setItem('role_name', myenc.encrypt(userdata.role_name.toString(), ''));
     localStorage.setItem('token', userdata.token);
     localStorage.setItem('username', myenc.encrypt(userdata.username.toString(), ''));
     localStorage.setItem('accessview', JSON.stringify(accesview));
