@@ -70,11 +70,11 @@ export const showconfirmbulkapprove = (listData = [], funcapprove = null, menuna
     type: 'blue'
   });
 };
-export const showerror = (message) => {
+export const showerror = (message, title = 'Error', backColor = 'red') => {
   $.alert({
-    title: 'Error',
+    title: title,
     icon: 'fas fa-warning',
-    type: 'red',
+    type: backColor,
     content: message
   });
 };

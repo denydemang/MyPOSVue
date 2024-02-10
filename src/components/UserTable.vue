@@ -54,8 +54,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, defineExpose, defineEmits } from 'vue';
-import { iziInfo, iziError, iziSuccess, iziWarning } from '@/izitoast.js';
+import { ref, onMounted, reactive } from 'vue';
+import { iziSuccess } from '@/izitoast.js';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';

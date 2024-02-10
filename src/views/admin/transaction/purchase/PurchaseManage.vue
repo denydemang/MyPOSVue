@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, reactive, onUnmounted, onBeforeMount, handleError } from 'vue';
+import { onMounted, ref, reactive, toRefs } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { formatRupiah1 } from '@/rupiahformatter';
@@ -11,13 +11,16 @@ import MyDate from '@/mydate';
 import ex from '@/exception.js';
 import flatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
+import { iziSuccess } from '@/izitoast.js';
 import ModalSearchSupplier from '@/components/ModalSearchSupplier.vue';
+import ModalSearchProduct from '@/components/ModalSearchProduct.vue';
 
 // PROPERTY
 // ------------------------------------
 const router = useRouter();
 const route = useRoute();
 const Date = new MyDate();
+const suppliername = ref(null);
 const isfetchingdata = ref(false);
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
@@ -26,9 +29,11 @@ const username = myencription.decrypt(localStorage.getItem('username'));
 const role = myencription.decrypt(localStorage.getItem('role_name'));
 const name = myencription.decrypt(localStorage.getItem('name'));
 const token = localStorage.getItem('token');
+const isPostingData = ref(false);
 const namesession = ref('');
 
 const ModalScSupplier = ref(null);
+const ModalScProduct = ref(null);
 
 const postPurchaseData = reactive({
   branchcode: '',
@@ -38,6 +43,7 @@ const postPurchaseData = reactive({
   username: '',
   name: '',
   role: '',
+  id_supplier: '',
   supplier_no: '',
   supplier_name: '',
   total: 0.0,
@@ -46,6 +52,7 @@ const postPurchaseData = reactive({
   ppn: 0.0,
   grand_total: 0.0,
   isppn: false,
+  percent_ppn: '',
   is_credit: null,
   items: []
 });
@@ -61,8 +68,7 @@ const listCacheItems = ref([]);
 const validation = ref({
   trans_date: '',
   supplier_name: '',
-  total: '',
-  grand_total: ''
+  id_supplier: ''
 });
 const interfaceitems = {
   id_product: '',
@@ -92,7 +98,6 @@ const config = ref({
 // Property  untuk vue3 Datatable
 // -------------------------------------
 const loading = ref(false);
-const total_rows = ref(0);
 const rows = ref(null);
 const cols =
   ref([
@@ -118,11 +123,15 @@ function setupDefaultPostData() {
   postPurchaseData.trans_date = Date.getCurrentDate('DD/MM/YYYY');
   postPurchaseData.barcode = '';
   postPurchaseData.is_credit = true;
+  postPurchaseData.isppn = false;
   postPurchaseData.id_user = iduser;
   postPurchaseData.username = username;
   postPurchaseData.role = role;
   postPurchaseData.name = name;
+  postPurchaseData.id_supplier = '';
+  postPurchaseData.supplier_no = '';
   postPurchaseData.supplier_name = '';
+  postPurchaseData.percent_ppn = 0;
   postPurchaseData.total = 0.0;
   postPurchaseData.other_fee = 0.0;
   postPurchaseData.payment_term = '';
@@ -131,17 +140,25 @@ function setupDefaultPostData() {
   postPurchaseData.items = [];
 }
 function setupDefaultInterfaceItems() {
-  interfaceitems.value.id_product = '';
-  interfaceitems.value.barcode = '';
-  interfaceitems.value.name = '';
-  interfaceitems.value.category = '';
-  interfaceitems.value.id_unit = '';
-  interfaceitems.value.qty = 0;
-  interfaceitems.value.price = 'Rp 0,00';
-  interfaceitems.value.total = 'Rp 0,00';
-  interfaceitems.value.discount = 'Rp 0,00';
-  interfaceitems.value.sub_total = 'Rp 0,00';
-  interfaceitems.value.remaining_stock = 0;
+  interfaceitems.id_product = null;
+  interfaceitems.barcode = '';
+  interfaceitems.name = '';
+  interfaceitems.category = '';
+  interfaceitems.id_unit = '';
+  interfaceitems.qty = 0;
+  interfaceitems.price = 'Rp 0,00';
+  interfaceitems.total = 'Rp 0,00';
+  interfaceitems.discount = 'Rp 0,00';
+  interfaceitems.sub_total = 'Rp 0,00';
+  interfaceitems.remaining_stock = 0;
+}
+
+function setupDefaultAmountTrans() {
+  (transAmount.value.total = 'Rp 0,00'),
+    (transAmount.value.other_fee = 'Rp 0,00'),
+    (transAmount.value.ppn = 'Rp 0,00'),
+    (transAmount.value.percent_ppn = 0),
+    (transAmount.value.grand_total = 'Rp 0,00');
 }
 
 function populateInterfaceItems(dataItem = {}) {
@@ -165,7 +182,6 @@ function populatelistCacheItem(data = {}) {
 function isAlreadyCached() {
   // Cek Apa kah Item Sudah Ada DI Cache
   if (listCacheItems.value.length > 0) {
-    console.log(postPurchaseData.barcode.trim());
     // Mereturn boolean
     return listCacheItems.value.some((item) => item.barcode === postPurchaseData.barcode);
   } else {
@@ -375,6 +391,28 @@ function clearBarcode() {
   postPurchaseData.barcode = '';
 }
 
+function purifyPurchaseData() {
+  let amountTrans = { ...transAmount.value };
+  const purchaseData = JSON.parse(JSON.stringify({ ...postPurchaseData }));
+  purchaseData.trans_date = Date.changeformat(purchaseData.trans_date, 'DD/MM/YYYY', 'YYYY-MM-DD');
+  purchaseData.percent_ppn = parseInt(amountTrans.percent_ppn);
+  purchaseData.total = parseToFloat(amountTrans.total);
+  purchaseData.other_fee = parseToFloat(amountTrans.other_fee);
+  purchaseData.ppn = parseToFloat(amountTrans.ppn);
+  purchaseData.grand_total = parseToFloat(amountTrans.grand_total);
+
+  let purchaseDataItemsToFloat = [...purchaseData.items].map((item) => {
+    item.qty = parseInt(item.qty);
+    item.price = parseToFloat(item.price);
+    item.total = parseToFloat(item.total);
+    item.discount = parseToFloat(item.discount);
+    item.sub_total = parseToFloat(item.sub_total);
+    return item;
+  });
+  purchaseData.items = [...purchaseDataItemsToFloat];
+  return purchaseData;
+}
+
 function errorHandle(error) {
   const excpetion = new ex(error);
   excpetion.func404 = error404;
@@ -387,6 +425,48 @@ function errorHandle(error) {
 function freewhitespacebarcode() {
   // Mengeliminasi white space awal dan akhir kalimat
   postPurchaseData.barcode = postPurchaseData.barcode.trim();
+}
+
+function successMessage(transCode) {
+  iziSuccess('Success', `Purchase : ${transCode} Successfully Saved`);
+}
+function validate() {
+  let valid = true;
+  if (postPurchaseData.id_supplier == '' || postPurchaseData.id_supplier == null) {
+    validation.value.id_supplier = 'ID Supplier Cannot Be Empty';
+    validation.value.supplier_name = 'Supplier Name Cannot Be Empty';
+
+    valid = false;
+    suppliername.value.focus();
+    return valid;
+  } else {
+    validation.value.id_supplier = '';
+    validation.value.supplier_name = '';
+  }
+  if (postPurchaseData.items.length === 0) {
+    showerror('List Items cannot Be Empty !', 'Warning !', 'orange');
+    valid = false;
+
+    return valid;
+  }
+  if (postPurchaseData.items.length > 0) {
+    if (postPurchaseData.items.some((item) => parseInt(parseToFloat(item.price)) === 0)) {
+      showerror('Price In Item List Must Greater Than 0 !', 'Warning !', 'orange');
+      valid = false;
+    }
+    if (postPurchaseData.items.some((item) => parseInt(parseToFloat(item.qty)) === 0)) {
+      showerror('Qty In Item List Must Greater Than 0 !', 'Warning !', 'orange');
+      valid = false;
+    }
+    return valid;
+  }
+}
+
+function clearForm() {
+  setupDefaultInterfaceItems();
+  setupDefaultPostData();
+  refreshGrid();
+  setupDefaultAmountTrans();
 }
 
 // ----------------------------------------------
@@ -426,20 +506,54 @@ async function getApiProductbyBarcode() {
   }
   clearBarcode();
 }
+
+async function postApiPurchaseData() {
+  if (validate()) {
+    let postData = purifyPurchaseData();
+
+    try {
+      isPostingData.value = true;
+      const response = await axios.post(`${apiurl}/api/purchases`, postData, {
+        headers: {
+          Authorization: token
+        }
+      });
+
+      let trans_no = response.data.data.purchase.trans_no;
+      successMessage(trans_no);
+      clearForm();
+    } catch (error) {
+      errorHandle(error);
+    } finally {
+      isPostingData.value = false;
+    }
+  }
+}
 // ---------------------------------------------
 
 // Event dan Method relasi child dan parent
 // ---------------------------------------------
-function showFormSearch() {
+function showFormSearchSupp() {
   ModalScSupplier.value.getSupplier();
+}
+function showFormSearchProduct() {
+  ModalScProduct.value.loadModal();
 }
 
 function populateFieldSupplier(supplierData) {
+  postPurchaseData.id_supplier = supplierData.id;
   postPurchaseData.supplier_no = supplierData.number_id;
   postPurchaseData.supplier_name = supplierData.name;
+  validation.value.supplier_name = '';
 }
-function getDataModal(data) {
+function populateBarcode(productData) {
+  postPurchaseData.barcode = productData.barcode;
+}
+function getDataModalSupplier(data) {
   populateFieldSupplier(data);
+}
+function getDataModalProduct(data) {
+  populateBarcode(data);
 }
 
 // ----------------------------------------------
@@ -458,7 +572,10 @@ onMounted(() => {
     <section class="section">
       <div class="section-header d-flex justify-content-between">
         <h1>Purchase > Add New Purchase</h1>
-        <span>admin / purchase / create </span>
+        <span class=""
+          ><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'purchase' }">purchase</router-link> /
+          <router-link :to="{ name: 'purchasecreate' }">create</router-link>
+        </span>
       </div>
       <div class="row">
         <div class="col-lg-6">
@@ -481,7 +598,14 @@ onMounted(() => {
                     <div class="input-group">
                       <div class="input-group-append">
                         <input type="text" class="form-control defaultInptStyle" readonly id="Supplier" v-model="postPurchaseData.supplier_no" />
-                        <button class="input-group-text" style="cursor: pointer" @click="showFormSearch" title="Search Supplier" data-toggle="modal" data-target="#modalSupplier">
+                        <button
+                          class="input-group-text"
+                          style="cursor: pointer"
+                          @click="showFormSearchSupp"
+                          title="Search Supplier"
+                          data-toggle="modal"
+                          data-target="#modalSupplier"
+                        >
                           <i class="fas fa-search"></i>
                         </button>
                         <button class="input-group-text" style="cursor: pointer" title="Add New Supplier" @click="router.push({ name: 'mastersupplier' })">
@@ -491,8 +615,17 @@ onMounted(() => {
                     </div>
                   </div>
                   <div class="form-group">
-                    <label for="Supplier">Supplier Name</label>
-                    <input type="text" class="form-control defaultInptStyle" readonly id="Supplier" v-model="postPurchaseData.supplier_name" />
+                    <label for="Supplier">Supplier Name *</label>
+                    <input
+                      type="text"
+                      ref="suppliername"
+                      class="form-control defaultInptStyle"
+                      :class="{ 'is-invalid': validation.supplier_name }"
+                      readonly
+                      id="Supplier"
+                      v-model="postPurchaseData.supplier_name"
+                    />
+                    <div class="invalid-feedback">{{ validation.supplier_name }}</div>
                   </div>
                 </div>
               </div>
@@ -522,11 +655,11 @@ onMounted(() => {
                     <label for=""> Payment</label>
                     <div class="d-flex pt-2">
                       <div class="form-check mr-2">
-                        <input class="form-check-input" type="radio" name="radiopayment" id="kredit" checked />
+                        <input class="form-check-input" type="radio" v-model="postPurchaseData.is_credit" name="radiopayment" id="kredit" value="true" checked />
                         <label class="form-check-label" style="font-weight: 400; font-size: larger" for="kredit">Kredit</label>
                       </div>
                       <div class="form-check mr-2">
-                        <input class="form-check-input" type="radio" name="radiopayment" id="cash" />
+                        <input class="form-check-input" type="radio" v-model="postPurchaseData.is_credit" name="radiopayment" id="cash" value="false" />
                         <label class="form-check-label" style="font-weight: 400; font-size: larger" for="cash">Cash</label>
                       </div>
                     </div>
@@ -542,16 +675,18 @@ onMounted(() => {
           <div class="card card-secondary">
             <div class="card-body py-0">
               <div class="form-group mt-2">
-                <label for="">Barcode</label>
+                <label for="barcode">Barcode</label>
                 <div class="input-group row">
                   <div class="input-group-prepend col-lg-8">
                     <div class="input-group-text">
                       <i class="fas fa-barcode"></i>
                     </div>
                     <input type="text" class="form-control defaultInptStyle" style="width: 100%" v-model="postPurchaseData.barcode" @keyup.enter="getApiProductbyBarcode" />
-                    <button type="button" class="btn btn--primary" @click="getApiProductbyBarcode"><i class="fas fa-cart-plus"></i></button>
-                    <button type="button" class="btn btn--primary"><i class="fas fa-search"></i></button>
-                    <button type="button" class="btn btn--primary"><i class="fas fa-plus"></i></button>
+                    <button type="button" class="btn" title="Add Item" @click="getApiProductbyBarcode"><i class="fas fa-cart-plus"></i></button>
+                    <button type="button" class="btn" @click="showFormSearchProduct" title="Search Product" data-toggle="modal" data-target="#modalProduct">
+                      <i class="fas fa-search"></i>
+                    </button>
+                    <button type="button" class="btn btn--primary" title="Add New Item" @click="router.push({ name: 'masterproductcreate' })"><i class="fas fa-plus"></i></button>
                   </div>
                 </div>
               </div>
@@ -574,7 +709,7 @@ onMounted(() => {
         <div class="col-lg-12">
           <div class="card card-success">
             <div class="card-header">
-              <h5 class="card-title">ITEMS LIST</h5>
+              <h5 class="card-title">ITEMS LIST *</h5>
             </div>
             <div class="card-body">
               <!-- Slots Vue 3 Datatabble -->
@@ -582,6 +717,7 @@ onMounted(() => {
                 <template #qty="data">
                   <input
                     type="number"
+                    min="1"
                     :value="data.value.qty"
                     @focusin="startInput($event)"
                     style="max-width: 60px !important"
@@ -656,16 +792,42 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      <button class="btn btn-primary mr-2" @click="postApiPurchaseData()">
+        <div v-if="isPostingData" style="display: flex; justify-content: center; padding-top: 5px; padding-bottom: 5px">
+          <div class="spinner" style="display: inline-block"></div>
+        </div>
+        <span v-else><i class="fas fa-save mr-2"> </i>Save</span>
+      </button>
+      <button class="btn btn-success mr-2" @click="clearForm"><i class="fas fa-sync-alt"></i> Clear</button>
+      <button class="btn btn-danger mr-2" @click="router.push({ name: 'purchase' })"><i class="fas fa-arrow-alt-circle-left"></i> Back</button>
     </section>
   </div>
 
   <!-- Modal Form -->
-  <ModalSearchSupplier ref="ModalScSupplier" @modalDataSupplier="getDataModal" />
+  <ModalSearchSupplier ref="ModalScSupplier" @modalDataSupplier="getDataModalSupplier" />
+  <ModalSearchProduct ref="ModalScProduct" @modalDataProduct="getDataModalProduct" />
 </template>
 
 <style scoped>
 .defaultInptStyle {
   font-size: 18px;
   font-weight: bold;
+}
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.4);
+  border-top: 4px solid #e6eaec;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spinnn 1s linear infinite;
+}
+
+@keyframes spinnn {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

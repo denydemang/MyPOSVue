@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive, defineExpose, defineEmits } from 'vue';
+import { ref, reactive } from 'vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import axios from 'axios';
@@ -22,6 +22,4 @@ const cols =
     { field: 'actions', title: 'Actions' }
   ]) || [];
 </script>
-<template>
-
-</template>
+<template></template>

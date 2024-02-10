@@ -1,16 +1,13 @@
 <script setup>
-import { ref, onMounted, reactive, defineExpose, defineEmits } from 'vue';
-import { iziSuccess } from '@/izitoast.js';
+import { ref, reactive } from 'vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
-import { showconfirmdelete, showerror } from '@/jqueryconfirm.js';
 import axios from 'axios';
 import ex from '@/exception.js';
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
 
 const token = localStorage.getItem('token');
-const isdeleting = ref(false);
 const loading = ref(false);
 const total_rows = ref(0);
 
@@ -44,7 +41,6 @@ const getSupplier = async () => {
     dataSupplier.forEach((obj, key) => {
       obj.no = counter++;
     });
-    console.log(dataSupplier);
     let totalAllRows = responseData.data.meta.total;
     total_rows.value = totalAllRows;
     rows.value = dataSupplier;
@@ -137,7 +133,7 @@ defineExpose({
           >
             <template #actions="data">
               <div>
-                <button type="button" class="btn btn-success btn-sm" @click="selectSupplier(data.value)"><i class="fas fa-check"></i> Pilih</button>
+                <button type="button" class="btn btn-success btn-sm" @click="selectSupplier(data.value)"><i class="fas fa-check"></i> Select</button>
               </div>
             </template>
           </vue3-datatable>
