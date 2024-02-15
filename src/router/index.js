@@ -143,6 +143,14 @@ const routes = [
         }
       },
       {
+        path: 'purchase/edit',
+        name: 'purchaseedit',
+        component: PurchaseManage,
+        meta: {
+          title: 'EDIT PURCHASE TRANSACTION'
+        }
+      },
+      {
         path: 'purchasereturn',
         name: 'purchasereturn',
         component: PurchaseReturn,

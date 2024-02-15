@@ -308,10 +308,10 @@ const viewBulkDelete = () => {
   showconfirmbulkdelete(listSelectedPurchase.value, bulkDeletePurchase, 'Purchase');
 };
 const viewEdit = (data) => {
-  router.push({
-    name: 'masterproductedit'
-  });
   sessionStorage.setItem('paramsid', enc.encrypt(data.id));
+  router.push({
+    name: 'purchaseedit'
+  });
 };
 const viewItem = (data) => {
   emit('viewItem', {

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, reactive, toRefs } from 'vue';
+import { onMounted, ref, reactive, toRefs, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { formatRupiah1 } from '@/rupiahformatter';
@@ -30,12 +30,12 @@ const role = myencription.decrypt(localStorage.getItem('role_name'));
 const name = myencription.decrypt(localStorage.getItem('name'));
 const token = localStorage.getItem('token');
 const isPostingData = ref(false);
-const namesession = ref('');
-
+const updateMode = ref(false);
 const ModalScSupplier = ref(null);
 const ModalScProduct = ref(null);
 
 const postPurchaseData = reactive({
+  trans_no: 'AUTO',
   branchcode: '',
   trans_date: '',
   barcode: '',
@@ -139,6 +139,7 @@ function setupDefaultPostData() {
   postPurchaseData.grand_total = 0.0;
   postPurchaseData.items = [];
 }
+
 function setupDefaultInterfaceItems() {
   interfaceitems.id_product = null;
   interfaceitems.barcode = '';
@@ -174,6 +175,19 @@ function populateInterfaceItems(dataItem = {}) {
   interfaceitems.sub_total = 'Rp 0,00';
   interfaceitems.remaining_stock = 0.0;
 }
+function populateInterfaceItemsBySession(dataItem = {}) {
+  interfaceitems.id_product = dataItem.id_product;
+  interfaceitems.barcode = dataItem.barcode;
+  interfaceitems.name = dataItem.product_name;
+  interfaceitems.category = dataItem.category_name;
+  interfaceitems.id_unit = dataItem.unit;
+  interfaceitems.qty = dataItem.qty;
+  interfaceitems.price = parseToRupiah(parseFloat(dataItem.price));
+  interfaceitems.total = parseToRupiah(parseFloat(dataItem.total));
+  interfaceitems.discount = parseToRupiah(parseFloat(dataItem.discount));
+  interfaceitems.sub_total = parseToRupiah(parseFloat(dataItem.sub_total));
+  interfaceitems.remaining_stock = 0.0;
+}
 
 function populatelistCacheItem(data = {}) {
   listCacheItems.value.push(data);
@@ -196,30 +210,34 @@ function clearValidation() {
   validation.value.grand_total = '';
 }
 
-function pushPostItemsPurchase(data = {}) {
-  // Check Apakah postPurchaseData ada isinya
-  if (postPurchaseData.items.length > 0) {
-    // Check Apakah Item Sudah Ada
-    const isExistItem = postPurchaseData.items.some((item) => item.barcode === data.barcode);
-    if (isExistItem) {
-      // Jika Ada Edit Qty
-      const postPurchaseDataUpdated = postPurchaseData.items.map((item) => {
-        if (item.barcode === data.barcode) {
-          return { ...item, qty: parseInt(item.qty) + parseInt(data.qty) };
-        } else {
-          return item;
-        }
-      });
-      postPurchaseData.items = [...postPurchaseDataUpdated];
+function pushPostItemsPurchase(data = {}, editMode = false) {
+  if (editMode) {
+    postPurchaseData.items.push(data);
+  } else {
+    // Check Apakah postPurchaseData ada isinya
+    if (postPurchaseData.items.length > 0) {
+      // Check Apakah Item Sudah Ada
+      const isExistItem = postPurchaseData.items.some((item) => item.barcode === data.barcode);
+      if (isExistItem) {
+        // Jika Ada Edit Qty
+        const postPurchaseDataUpdated = postPurchaseData.items.map((item) => {
+          if (item.barcode === data.barcode) {
+            return { ...item, qty: parseInt(item.qty) + parseInt(data.qty) };
+          } else {
+            return item;
+          }
+        });
+        postPurchaseData.items = [...postPurchaseDataUpdated];
+      } else {
+        // Jika Tidak Ada Langsung push item
+        postPurchaseData.items.push(data);
+      }
     } else {
-      // Jika Tidak Ada Langsung push item
+      // Item Purchase Kosong
       postPurchaseData.items.push(data);
     }
-  } else {
-    // Item Purchase Kosong
-    postPurchaseData.items.push(data);
+    calculateItems();
   }
-  calculateItems();
 }
 
 function getCachedItem() {
@@ -334,6 +352,7 @@ function checklistppn() {
 function deleteItem(barcode) {
   const filteredItems = [...postPurchaseData.items].filter((item) => item.barcode !== barcode);
   postPurchaseData.items = [...filteredItems];
+  calculateItems();
   refreshGrid();
 }
 
@@ -469,6 +488,46 @@ function clearForm() {
   setupDefaultAmountTrans();
 }
 
+async function checksession() {
+  const routername = route.name;
+
+  if (routername == 'purchaseedit') {
+    if (sessionStorage.getItem('paramsid')) {
+      const idSession = myencription.decrypt(sessionStorage.getItem('paramsid'));
+      if (!idSession) {
+        router.push({ name: 'purchase' });
+        return;
+      }
+      updateMode.value = true;
+      const { item, purchase } = await getApiPurchaseDataByID(idSession);
+      populatePurchaseData(item, purchase);
+    } else {
+      router.push({ name: 'purchase' });
+    }
+  }
+}
+
+function populatePurchaseData(dataItem, dataPurchase) {
+  postPurchaseData.trans_no = dataPurchase.trans_no;
+  postPurchaseData.trans_date = Date.changeformat(dataPurchase.trans_date, 'YYYY-MM-DD', 'DD/MM/YYYY');
+  postPurchaseData.id_supplier = dataPurchase.id_supplier;
+  postPurchaseData.supplier_no = dataPurchase.number_id_supplier;
+  postPurchaseData.supplier_name = dataPurchase.supplier_name;
+  postPurchaseData.is_credit = Boolean(dataPurchase.is_credit);
+  postPurchaseData.isppn = Boolean(dataPurchase.percent_ppn != 0);
+  transAmount.value.total = parseToRupiah(parseFloat(dataPurchase.total_purchase));
+  transAmount.value.other_fee = parseToRupiah(parseFloat(dataPurchase.other_fee));
+  transAmount.value.ppn = parseToRupiah(parseFloat(dataPurchase.ppn));
+  transAmount.value.percent_ppn = dataPurchase.percent_ppn;
+  transAmount.value.grand_total = parseToRupiah(parseFloat(dataPurchase.grand_total));
+  dataItem.forEach((data) => {
+    populateInterfaceItemsBySession(data);
+    populatelistCacheItem({ ...interfaceitems });
+    pushPostItemsPurchase({ ...interfaceitems }, true);
+  });
+  refreshGrid();
+}
+
 // ----------------------------------------------
 
 // API CALLER
@@ -507,25 +566,64 @@ async function getApiProductbyBarcode() {
   clearBarcode();
 }
 
+async function getApiPurchaseDataByID(ID) {
+  try {
+    isfetchingdata.value = true;
+    const response = await axios.get(`${apiurl}/api/purchases/detail/${branch}/${ID}`, {
+      headers: {
+        Authorization: token
+      }
+    });
+
+    isfetchingdata.value = false;
+    return response.data.data;
+  } catch (error) {
+    isPostingData.value = false;
+    const nullData = {
+      item: [],
+      purchase: null
+    };
+    console.log(error);
+    return nullData;
+  }
+}
+
 async function postApiPurchaseData() {
   if (validate()) {
     let postData = purifyPurchaseData();
+    if (updateMode.value) {
+      try {
+        isPostingData.value = true;
+        const response = await axios.put(`${apiurl}/api/purchases/${branch}/${postPurchaseData.trans_no}`, postData, {
+          headers: {
+            Authorization: token
+          }
+        });
+        let trans_no = response.data.data.purchase.trans_no;
+        sessionStorage.setItem('successmessage', `Successfully Updated Purchase Transaction : ${trans_no}`);
+        router.push({ name: 'purchase' });
+      } catch (error) {
+        errorHandle(error);
+      } finally {
+        isPostingData.value = false;
+      }
+    } else {
+      try {
+        isPostingData.value = true;
+        const response = await axios.post(`${apiurl}/api/purchases`, postData, {
+          headers: {
+            Authorization: token
+          }
+        });
 
-    try {
-      isPostingData.value = true;
-      const response = await axios.post(`${apiurl}/api/purchases`, postData, {
-        headers: {
-          Authorization: token
-        }
-      });
-
-      let trans_no = response.data.data.purchase.trans_no;
-      successMessage(trans_no);
-      clearForm();
-    } catch (error) {
-      errorHandle(error);
-    } finally {
-      isPostingData.value = false;
+        let trans_no = response.data.data.purchase.trans_no;
+        successMessage(trans_no);
+        clearForm();
+      } catch (error) {
+        errorHandle(error);
+      } finally {
+        isPostingData.value = false;
+      }
     }
   }
 }
@@ -560,9 +658,12 @@ function getDataModalProduct(data) {
 
 // Life Cycle Hooks
 // --------------------------------------------
-
 onMounted(() => {
   setupDefaultPostData();
+  checksession();
+});
+onUnmounted(() => {
+  sessionStorage.removeItem('paramsid');
 });
 
 // ------------------------------------------
@@ -571,235 +672,259 @@ onMounted(() => {
   <div class="main-content">
     <section class="section">
       <div class="section-header d-flex justify-content-between">
-        <h1>Purchase > Add New Purchase</h1>
-        <span class=""
-          ><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'purchase' }">purchase</router-link> /
-          <router-link :to="{ name: 'purchasecreate' }">create</router-link>
-        </span>
+        <template v-if="route.name == 'purchaseedit'">
+          <h1>Purchase > Edit Purchase</h1>
+          <span class=""
+            ><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'purchase' }">purchase</router-link> /
+            <router-link :to="{ name: 'purchaseedit' }">edit</router-link>
+          </span>
+        </template>
+        <template v-else>
+          <h1>Purchase > Add New Purchase</h1>
+          <span class=""
+            ><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'purchase' }">purchase</router-link> /
+            <router-link :to="{ name: 'purchasecreate' }">create</router-link>
+          </span>
+        </template>
       </div>
-      <div class="row">
-        <div class="col-lg-6">
-          <div class="card card-secondary">
+      <!--LOADING SPINNER  -->
+      <template v-if="isfetchingdata">
+        <div class="row">
+          <div class="col-lg-12">
             <div class="card-body">
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label for="trans_no">Transaction Number</label>
-                    <input type="text" class="form-control defaultInptStyle" id="trans_no" value="AUTO" disabled />
+              <div class="loading-overlay">
+                <div class="loading-icon"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- END LOADING SPINNER -->
+      <template v-else>
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="card card-secondary">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label for="trans_no">Transaction Number</label>
+                      <input type="text" class="form-control defaultInptStyle" id="trans_no" v-model="postPurchaseData.trans_no" disabled />
+                    </div>
+                    <div class="form-group">
+                      <label for="trans_date">Transaction Date</label>
+                      <flatPickr class="form-control defaultInptStyle" :config="config" v-model="postPurchaseData.trans_date"></flatPickr>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="trans_date">Transaction Date</label>
-                    <flatPickr class="form-control defaultInptStyle" :config="config" v-model="postPurchaseData.trans_date"></flatPickr>
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label for="Supplier">ID Supplier</label>
+                      <div class="input-group">
+                        <div class="input-group-append">
+                          <input type="text" class="form-control defaultInptStyle" readonly id="Supplier" v-model="postPurchaseData.supplier_no" />
+                          <button
+                            class="input-group-text"
+                            style="cursor: pointer"
+                            @click="showFormSearchSupp"
+                            title="Search Supplier"
+                            data-toggle="modal"
+                            data-target="#modalSupplier"
+                          >
+                            <i class="fas fa-search"></i>
+                          </button>
+                          <button class="input-group-text" style="cursor: pointer" title="Add New Supplier" @click="router.push({ name: 'mastersupplier' })">
+                            <i class="fas fa-user-plus"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="Supplier">Supplier Name *</label>
+                      <input
+                        type="text"
+                        ref="suppliername"
+                        class="form-control defaultInptStyle"
+                        :class="{ 'is-invalid': validation.supplier_name }"
+                        readonly
+                        id="Supplier"
+                        v-model="postPurchaseData.supplier_name"
+                      />
+                      <div class="invalid-feedback">{{ validation.supplier_name }}</div>
+                    </div>
                   </div>
                 </div>
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label for="Supplier">ID Supplier</label>
-                    <div class="input-group">
-                      <div class="input-group-append">
-                        <input type="text" class="form-control defaultInptStyle" readonly id="Supplier" v-model="postPurchaseData.supplier_no" />
-                        <button
-                          class="input-group-text"
-                          style="cursor: pointer"
-                          @click="showFormSearchSupp"
-                          title="Search Supplier"
-                          data-toggle="modal"
-                          data-target="#modalSupplier"
-                        >
-                          <i class="fas fa-search"></i>
-                        </button>
-                        <button class="input-group-text" style="cursor: pointer" title="Add New Supplier" @click="router.push({ name: 'mastersupplier' })">
-                          <i class="fas fa-user-plus"></i>
-                        </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card card-secondary">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label for="username">Pic User</label>
+                      <input type="text" class="form-control defaultInptStyle" id="username" v-model="postPurchaseData.username" disabled />
+                    </div>
+                    <div class="form-group">
+                      <label for="pic_name">Pic Name</label>
+                      <input type="text" class="form-control defaultInptStyle" disabled v-model="postPurchaseData.name" id="pic_name" />
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label for="role">Role</label>
+                      <input type="text" class="form-control defaultInptStyle" disabled id="role" v-model="postPurchaseData.role" />
+                    </div>
+                    <div class="form-group">
+                      <label for=""> Payment</label>
+                      <div class="d-flex pt-2">
+                        <div class="form-check mr-2">
+                          <input class="form-check-input" type="radio" v-model="postPurchaseData.is_credit" name="radiopayment" id="kredit" value="true" checked />
+                          <label class="form-check-label" style="font-weight: 400; font-size: larger" for="kredit">Kredit</label>
+                        </div>
+                        <div class="form-check mr-2">
+                          <input class="form-check-input" type="radio" v-model="postPurchaseData.is_credit" name="radiopayment" id="cash" value="false" />
+                          <label class="form-check-label" style="font-weight: 400; font-size: larger" for="cash">Cash</label>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div class="form-group">
-                    <label for="Supplier">Supplier Name *</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="card card-secondary">
+              <div class="card-body py-0">
+                <div class="form-group mt-2">
+                  <label for="barcode">Barcode</label>
+                  <div class="input-group row">
+                    <div class="input-group-prepend col-lg-8">
+                      <div class="input-group-text">
+                        <i class="fas fa-barcode"></i>
+                      </div>
+                      <input type="text" class="form-control defaultInptStyle" style="width: 100%" v-model="postPurchaseData.barcode" @keyup.enter="getApiProductbyBarcode" />
+                      <button type="button" class="btn" title="Add Item" @click="getApiProductbyBarcode"><i class="fas fa-cart-plus"></i></button>
+                      <button type="button" class="btn" @click="showFormSearchProduct" title="Search Product" data-toggle="modal" data-target="#modalProduct">
+                        <i class="fas fa-search"></i>
+                      </button>
+                      <button type="button" class="btn btn--primary" title="Add New Item" @click="router.push({ name: 'masterproductcreate' })"><i class="fas fa-plus"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card card-secondary">
+              <div class="card-body py-0">
+                <div class="form-group row mt-3">
+                  <label class="mr-5" style="font-size: 30px; font-weight: bold">Grand Total :</label>
+                  <label class="text-primary" style="font-size: 30px; font-weight: bold">{{ transAmount.grand_total }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ITEMS SECTION -->
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card card-success">
+              <div class="card-header">
+                <h5 class="card-title">ITEMS LIST *</h5>
+              </div>
+              <div class="card-body">
+                <!-- Slots Vue 3 Datatabble -->
+                <vue3-datatable :loading="loading" :rows="rows" :columns="cols" height="300px" :stickyHeader="true" :showNumbers="false">
+                  <template #qty="data">
+                    <input
+                      type="number"
+                      min="1"
+                      :value="data.value.qty"
+                      @focusin="startInput($event)"
+                      style="max-width: 60px !important"
+                      @focusout="updateItems(data.value.barcode, $event, 'qty')"
+                    />
+                  </template>
+                  <template #price="data">
+                    <input
+                      style="max-width: 120px"
+                      type="text"
+                      :value="data.value.price"
+                      @focusin="startInput($event)"
+                      @keyup="eliminateNonNumerikalInput($event)"
+                      @focusout="updateItems(data.value.barcode, $event, 'price')"
+                    />
+                  </template>
+                  <template #discount="data">
                     <input
                       type="text"
-                      ref="suppliername"
-                      class="form-control defaultInptStyle"
-                      :class="{ 'is-invalid': validation.supplier_name }"
-                      readonly
-                      id="Supplier"
-                      v-model="postPurchaseData.supplier_name"
+                      style="max-width: 100px"
+                      :value="data.value.discount"
+                      @focusin="startInput($event)"
+                      @keyup="eliminateNonNumerikalInput($event)"
+                      @focusout="updateItems(data.value.barcode, $event, 'discount')"
                     />
-                    <div class="invalid-feedback">{{ validation.supplier_name }}</div>
-                  </div>
-                </div>
+                  </template>
+                  <template #actions="data">
+                    <button class="btn btn-danger" @click="deleteItem(data.value.barcode)">X</button>
+                  </template>
+                </vue3-datatable>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-lg-6">
-          <div class="card card-secondary">
-            <div class="card-body">
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label for="username">Pic User</label>
-                    <input type="text" class="form-control defaultInptStyle" id="username" v-model="postPurchaseData.username" disabled />
-                  </div>
-                  <div class="form-group">
-                    <label for="pic_name">Pic Name</label>
-                    <input type="text" class="form-control defaultInptStyle" disabled v-model="postPurchaseData.name" id="pic_name" />
-                  </div>
+        <!-- END ITEMS SECTION -->
+        <div class="row">
+          <div class="col-lg-5 offset-lg-7">
+            <div class="card card-danger">
+              <div class="card-body">
+                <div class="form-group row">
+                  <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Total</label>
+                  <input type="text" class="form-control col-lg-9 defaultInptStyle" :value="transAmount.total" readonly />
                 </div>
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label for="role">Role</label>
-                    <input type="text" class="form-control defaultInptStyle" disabled id="role" v-model="postPurchaseData.role" />
-                  </div>
-                  <div class="form-group">
-                    <label for=""> Payment</label>
-                    <div class="d-flex pt-2">
-                      <div class="form-check mr-2">
-                        <input class="form-check-input" type="radio" v-model="postPurchaseData.is_credit" name="radiopayment" id="kredit" value="true" checked />
-                        <label class="form-check-label" style="font-weight: 400; font-size: larger" for="kredit">Kredit</label>
-                      </div>
-                      <div class="form-check mr-2">
-                        <input class="form-check-input" type="radio" v-model="postPurchaseData.is_credit" name="radiopayment" id="cash" value="false" />
-                        <label class="form-check-label" style="font-weight: 400; font-size: larger" for="cash">Cash</label>
-                      </div>
-                    </div>
-                  </div>
+                <div class="form-group row">
+                  <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Other Fee</label>
+                  <input
+                    type="text"
+                    class="form-control col-lg-9 defaultInptStyle"
+                    v-model="transAmount.other_fee"
+                    @keyup="eliminateNonNumerikalInput($event)"
+                    @focusin="startInput($event)"
+                    @focusout="updateAmountTrans($event, 'otherfee')"
+                    @abort="updateAmountTrans($event, 'otherfee')"
+                  />
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-6">
-          <div class="card card-secondary">
-            <div class="card-body py-0">
-              <div class="form-group mt-2">
-                <label for="barcode">Barcode</label>
-                <div class="input-group row">
-                  <div class="input-group-prepend col-lg-8">
-                    <div class="input-group-text">
-                      <i class="fas fa-barcode"></i>
-                    </div>
-                    <input type="text" class="form-control defaultInptStyle" style="width: 100%" v-model="postPurchaseData.barcode" @keyup.enter="getApiProductbyBarcode" />
-                    <button type="button" class="btn" title="Add Item" @click="getApiProductbyBarcode"><i class="fas fa-cart-plus"></i></button>
-                    <button type="button" class="btn" @click="showFormSearchProduct" title="Search Product" data-toggle="modal" data-target="#modalProduct">
-                      <i class="fas fa-search"></i>
-                    </button>
-                    <button type="button" class="btn btn--primary" title="Add New Item" @click="router.push({ name: 'masterproductcreate' })"><i class="fas fa-plus"></i></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="card card-secondary">
-            <div class="card-body py-0">
-              <div class="form-group row mt-3">
-                <label class="mr-5" style="font-size: 30px; font-weight: bold">Grand Total :</label>
-                <label class="text-primary" style="font-size: 30px; font-weight: bold">{{ transAmount.grand_total }}</label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- ITEMS SECTION -->
-      <div class="row">
-        <div class="col-lg-12">
-          <div class="card card-success">
-            <div class="card-header">
-              <h5 class="card-title">ITEMS LIST *</h5>
-            </div>
-            <div class="card-body">
-              <!-- Slots Vue 3 Datatabble -->
-              <vue3-datatable :loading="loading" :rows="rows" :columns="cols" height="300px" :stickyHeader="true" :showNumbers="false">
-                <template #qty="data">
+                <div class="form-group row">
+                  <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3"
+                    >Ppn <input type="checkbox" v-model="postPurchaseData.isppn" @change="checklistppn()"
+                  /></label>
                   <input
                     type="number"
-                    min="1"
-                    :value="data.value.qty"
-                    @focusin="startInput($event)"
-                    style="max-width: 60px !important"
-                    @focusout="updateItems(data.value.barcode, $event, 'qty')"
+                    class="form-control col-lg-2 defaultInptStyle"
+                    @change="calculateAmountTrans()"
+                    style="font-size: 18px; font-weight: bold"
+                    :readonly="!postPurchaseData.isppn"
+                    v-model="transAmount.percent_ppn"
                   />
-                </template>
-                <template #price="data">
-                  <input
-                    style="max-width: 120px"
-                    type="text"
-                    :value="data.value.price"
-                    @focusin="startInput($event)"
-                    @keyup="eliminateNonNumerikalInput($event)"
-                    @focusout="updateItems(data.value.barcode, $event, 'price')"
-                  />
-                </template>
-                <template #discount="data">
-                  <input
-                    type="text"
-                    style="max-width: 100px"
-                    :value="data.value.discount"
-                    @focusin="startInput($event)"
-                    @keyup="eliminateNonNumerikalInput($event)"
-                    @focusout="updateItems(data.value.barcode, $event, 'discount')"
-                  />
-                </template>
-                <template #actions="data">
-                  <button class="btn btn-danger" @click="deleteItem(data.value.barcode)">X</button>
-                </template>
-              </vue3-datatable>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- END ITEMS SECTION -->
-      <div class="row">
-        <div class="col-lg-5 offset-lg-7">
-          <div class="card card-danger">
-            <div class="card-body">
-              <div class="form-group row">
-                <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Total</label>
-                <input type="text" class="form-control col-lg-9 defaultInptStyle" :value="transAmount.total" readonly />
-              </div>
-              <div class="form-group row">
-                <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3">Other Fee</label>
-                <input
-                  type="text"
-                  class="form-control col-lg-9 defaultInptStyle"
-                  v-model="transAmount.other_fee"
-                  @keyup="eliminateNonNumerikalInput($event)"
-                  @focusin="startInput($event)"
-                  @focusout="updateAmountTrans($event, 'otherfee')"
-                  @abort="updateAmountTrans($event, 'otherfee')"
-                />
-              </div>
-              <div class="form-group row">
-                <label style="font-size: large; font-family: Arial, Helvetica, sans-serif" class="col-lg-3"
-                  >Ppn <input type="checkbox" v-model="postPurchaseData.isppn" @change="checklistppn()"
-                /></label>
-                <input
-                  type="number"
-                  class="form-control col-lg-2 defaultInptStyle"
-                  @change="calculateAmountTrans()"
-                  style="font-size: 18px; font-weight: bold"
-                  :readonly="!postPurchaseData.isppn"
-                  v-model="transAmount.percent_ppn"
-                />
-                <label class="col-lg-1 pt-1" style="font-size: 18px">%</label>
-                <input type="text" class="form-control col-lg-6 defaultInptStyle" readonly v-model="transAmount.ppn" />
+                  <label class="col-lg-1 pt-1" style="font-size: 18px">%</label>
+                  <input type="text" class="form-control col-lg-6 defaultInptStyle" readonly v-model="transAmount.ppn" />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <button class="btn btn-primary mr-2" @click="postApiPurchaseData()">
-        <div v-if="isPostingData" style="display: flex; justify-content: center; padding-top: 5px; padding-bottom: 5px">
-          <div class="spinner" style="display: inline-block"></div>
-        </div>
-        <span v-else><i class="fas fa-save mr-2"> </i>Save</span>
-      </button>
-      <button class="btn btn-success mr-2" @click="clearForm"><i class="fas fa-sync-alt"></i> Clear</button>
-      <button class="btn btn-danger mr-2" @click="router.push({ name: 'purchase' })"><i class="fas fa-arrow-alt-circle-left"></i> Back</button>
+        <button class="btn btn-primary mr-2" @click="postApiPurchaseData()">
+          <div v-if="isPostingData" style="display: flex; justify-content: center; padding-top: 5px; padding-bottom: 5px">
+            <div class="spinner" style="display: inline-block"></div>
+          </div>
+          <span v-else><i class="fas fa-save mr-2"> </i>Save</span>
+        </button>
+        <button class="btn btn-success mr-2" v-if="!updateMode" @click="clearForm"><i class="fas fa-sync-alt"></i> Clear</button>
+        <button class="btn btn-danger mr-2" @click="router.push({ name: 'purchase' })"><i class="fas fa-arrow-alt-circle-left"></i> Back</button>
+      </template>
     </section>
   </div>
 
@@ -823,6 +948,39 @@ onMounted(() => {
 }
 
 @keyframes spinnn {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Style untuk loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999999;
+}
+
+/* Gaya untuk loading icon */
+.loading-icon {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
   0% {
     transform: rotate(0deg);
   }

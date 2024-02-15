@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import PurchaseTable from '@/components/PurchaseTable.vue';
 import axios from 'axios';
@@ -14,7 +14,6 @@ const branch = process.env.VUE_APP_BRANCH;
 const token = localStorage.getItem('token');
 const itemPurchase = ref([]);
 const transPurchase = ref({});
-const isPostingData = ref(false);
 const modalDetailItemVisible = ref(false);
 const isfetchingdata = ref(false);
 
@@ -50,6 +49,13 @@ const getApiItemPurchase = async (data) => {
     exception.showError();
   }
 };
+onMounted(() => {
+  if (sessionStorage.getItem('successmessage') != null) {
+    const succesUpdateMessage = sessionStorage.getItem('successmessage');
+    iziSuccess('Success', succesUpdateMessage);
+    sessionStorage.removeItem('successmessage');
+  }
+});
 </script>
 <template>
   <!-- Modal Form -->
