@@ -97,8 +97,9 @@ onMounted(() => {
   <!-- Main Content -->
   <div class="main-content">
     <section class="section">
-      <div class="section-header">
+      <div class="section-header d-flex justify-content-between">
         <h1>Purchase</h1>
+        <span class=""><router-link :to="{ name: 'admin' }">admin</router-link> / <router-link :to="{ name: 'purchase' }">purchase</router-link> </span>
       </div>
       <div class="row">
         <div class="col-lg-12 col-md-12 col-12">

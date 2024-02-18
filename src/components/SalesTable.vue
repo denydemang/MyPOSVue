@@ -1,11 +1,12 @@
 <script setup>
+// ----------------------------------------------- Import Library And Dependency
 import { ref, onMounted, reactive } from 'vue';
 import { iziSuccess } from '@/izitoast.js';
 import { useRouter } from 'vue-router';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import { showconfirmdelete, showerror, showconfirmapprove, showconfirmbulkdelete, showconfirmbulkapprove } from '@/jqueryconfirm.js';
-import { formatRupiah } from '@/rupiahformatter.js';
+import { formatRupiah1 } from '@/rupiahformatter.js';
 import enc from '@/myencription.js';
 import ex from '@/exception.js';
 import axios from 'axios';
@@ -16,6 +17,9 @@ import 'flatpickr/dist/flatpickr.css';
 // try more themes at - https://flatpickr.js.org/themes/
 import 'flatpickr/dist/themes/material_blue.css';
 
+// --------------------------------------------- End Import Library Dependency
+
+// ------------------------------------------------- Property
 // config untuk flatpickr datetime
 const config = ref({
   wrap: true, // set wrap to true only when using 'input-group'
@@ -23,21 +27,26 @@ const config = ref({
   altInput: true,
   dateFormat: 'd/m/Y'
 });
+
 // inisiasi function mydate
 const Date = new MyDate();
-
+// Define Emits
 const emit = defineEmits(['viewItem']);
 
 const router = useRouter();
-const listSelectedPurchase = ref([]);
+const listSelectedSales = ref([]);
 const apiurl = process.env.VUE_APP_API_URL;
 const branch = process.env.VUE_APP_BRANCH;
+const apiTrans = '/api/sales/';
+const title = 'Sales';
 const token = localStorage.getItem('token');
 const isdeleting = ref(false);
-const loading = ref(true);
-const total_rows = ref(0);
 const enabledBulk = ref(true);
 const enabledCounter = ref(true);
+
+// Property vue 3 datatble
+const loading = ref(true);
+const total_rows = ref(0);
 const params = reactive({
   current_page: 1,
   pagesize: 10,
@@ -50,22 +59,7 @@ const params = reactive({
   is_approve: null,
   filterby: ''
 });
-
 const rows = ref(null);
-const setupDefault = () => {
-  params.filterby = 'all';
-  params.paystatus = 'true';
-  params.is_approve = 'false';
-  params.startDate = Date.getfirstdate();
-  params.endDate = Date.getlastdate();
-};
-const manageerror = (error, name) => {
-  if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
-    showerror('Purchase ' + name + ' Already Used In Transaction Cannot Be Deleted');
-  } else {
-    showerror('ERROR!!! Internal Server Error');
-  }
-};
 const cols =
   ref([
     { field: 'actions', title: '#', sort: false },
@@ -73,213 +67,57 @@ const cols =
     { field: 'id', title: 'ID SALES', isUnique: true, hide: true },
     { field: 'trans_no', title: 'Transaction Number', sort: true, cellClass: 'text-nowrap' },
     { field: 'trans_date', title: 'Transaction Date', sort: true, cellClass: 'text-nowrap' },
-    { field: 'id_supplier', title: 'Supplier ID', sort: true, hide: true },
-    { field: 'number_id_supplier', title: 'ID Supplier', sort: true, cellClass: 'text-nowrap' },
-    { field: 'supplier_name', title: 'Supplier Name', sort: true, cellClass: 'text-nowrap' },
+    { field: 'id_cust', title: 'Customer ID', sort: true, hide: true },
+    { field: 'cust_no', title: 'Cust No', sort: true, cellClass: 'text-nowrap' },
+    { field: 'cust_name', title: 'Cust Name', sort: true, cellClass: 'text-nowrap' },
     { field: 'id_user', title: 'ID User', sort: true, hide: true, cellClass: 'text-nowrap' },
-    { field: 'total_purchase', title: 'Sub Total', sort: true, cellClass: 'text-nowrap' },
+    { field: 'pic_name', title: 'PIC Name', sort: true, cellClass: 'text-nowrap' },
+    { field: 'total_sales', title: 'Sub Total', sort: true, cellClass: 'text-nowrap' },
     { field: 'other_fee', title: 'Other Fee', sort: true, cellClass: 'text-nowrap' },
-    { field: 'ppn', title: 'PPN', sort: true, cellClass: 'text-nowrap' },
+    { field: 'sales_ppn', title: 'PPN', sort: true, cellClass: 'text-nowrap' },
     { field: 'grand_total', title: 'Grand Total', sort: true, cellClass: 'text-nowrap' },
-    { field: 'payment_term', title: 'Payment Term', cellClass: 'text-nowrap' },
-    { field: 'is_approve', title: 'Approved' },
-    { field: 'is_credit', title: 'Pay Status' },
-    { field: 'pic_name', title: 'Pic Name', sort: true, cellClass: 'text-nowrap' }
+    { field: 'paid', title: 'Paid Amount', sort: true, cellClass: 'text-nowrap' },
+    { field: 'change_amount', title: 'Change Amount', sort: true, cellClass: 'text-nowrap' },
+    { field: 'sales_notes', title: 'Sales Note', cellClass: 'text-nowrap' },
+    { field: 'is_sales_credit', title: 'Pay Status' },
+    { field: 'is_approve', title: 'Approved' }
   ]) || [];
+// End property vue-3 datatable
+// ---------------------------------------------- End Property
 
-const getApiPurchase = async () => {
-  try {
-    loading.value = true;
-    const paystatusboolean = JSON.parse(params.paystatus.toLowerCase());
-    const convertstartdate = Date.changeformat(params.startDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
-    const convertenddate = Date.changeformat(params.endDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
-    const responseData = await axios.get(
-      `${apiurl}/api/purchases/list/${branch}?orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&perpage=${params.pagesize}&startdate=${convertstartdate}&enddate=${convertenddate}&isapprove=${params.is_approve}&iscredit=${paystatusboolean}`,
-      {
-        headers: {
-          Authorization: token
-        }
-      }
-    );
-    let dataPurchase = responseData.data.data;
-    dataPurchase.map((item) => {
-      item.total_purchase = formatRupiah(item.total_purchase);
-      item.other_fee = formatRupiah(item.other_fee);
-      item.ppn = formatRupiah(item.ppn);
-      item.grand_total = formatRupiah(item.grand_total);
-      item.trans_date = Date.changeformat(item.trans_date, 'YYYY-MM-DD', 'DD/MM/YYYY');
-      item.payment_term = item.payment_term || '-';
-      return item;
-    });
-    let totalAllRows = responseData.data.meta.total;
-    total_rows.value = totalAllRows;
-    rows.value = dataPurchase;
-  } catch (error) {
-    const exception = new ex(error);
-    exception.showError();
-    total_rows.value = 0;
-    rows.value = null;
-  }
+// ----------------------------------------------- Function and subroutines
+function setupDefaultParam() {
+  params.filterby = 'all';
+  params.paystatus = 'false';
+  params.is_approve = 'false';
+  params.startDate = Date.getfirstdate();
+  params.endDate = Date.getlastdate();
+}
 
-  loading.value = false;
-};
-const getSearchApiPurchase = async () => {
-  loading.value = true;
-  const paystatusboolean = JSON.parse(params.paystatus.toLowerCase());
-  const convertstartdate = Date.changeformat(params.startDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
-  const convertenddate = Date.changeformat(params.endDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
-  const convertsearch = encodeURIComponent(params.search);
-  try {
-    const responseData = await axios.get(
-      `${apiurl}/api/purchases/${branch}/search?key=${convertsearch}&filterby=${params.filterby}&orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&perpage=${params.pagesize}&startdate=${convertstartdate}&enddate=${convertenddate}&isapprove=${params.is_approve}&iscredit=${paystatusboolean}`,
-      {
-        headers: {
-          Authorization: token
-        }
-      }
-    );
-    let dataPurchase = responseData.data.data;
-    let totalAllRows = responseData.data.meta.total;
+function erroHandle(error, additionaldata = '') {
+  const exception = new ex(error);
+  exception.func500 = manageerror;
+  exception.additionaldata = additionaldata;
+  exception.showError();
+  total_rows.value = 0;
+  rows.value = null;
 
-    // Format value purchase data
-    dataPurchase.map((item) => {
-      item.total_purchase = formatRupiah(item.total_purchase);
-      item.other_fee = formatRupiah(item.other_fee);
-      item.ppn = formatRupiah(item.ppn);
-      item.grand_total = formatRupiah(item.grand_total);
-      item.trans_date = Date.changeformat(item.trans_date, 'YYYY-MM-DD', 'DD/MM/YYYY');
-      item.payment_term = item.payment_term || '-';
-      return item;
-    });
-    total_rows.value = totalAllRows;
-    rows.value = dataPurchase;
-  } catch (error) {
-    const exception = new ex(error);
-    exception.showError();
-    total_rows.value = 0;
-    rows.value = null;
-  }
-
-  loading.value = false;
-};
-const deletePurchase = async (id, name) => {
-  try {
-    isdeleting.value = true;
-    await axios.delete(`${apiurl}/api/purchases/${branch}/${id}`, {
-      headers: {
-        Authorization: token
-      }
-    });
-    isdeleting.value = false;
-    getApiPurchase();
-    iziSuccess('Success', 'Successfully Deleted Purchase ' + name);
-  } catch (error) {
-    isdeleting.value = false;
-    const exception = new ex(error);
-    exception.func500 = manageerror;
-    exception.additionaldata = name;
-    exception.showError();
-  }
-};
-const bulkDeletePurchase = async (listPurchase = []) => {
-  let countDeleted = 0;
-  let maxlooping = listPurchase.length;
-  for (let i = 0; i < listPurchase.length; i++) {
-    try {
-      isdeleting.value = true;
-      await axios.delete(`${apiurl}/api/purchases/${branch}/${listPurchase[i].id}`, {
-        headers: {
-          Authorization: token
-        }
-      });
-      countDeleted++;
-    } catch (error) {
-      const exception = new ex(error);
-      exception.func500 = manageerror;
-      exception.additionaldata = listPurchase[i].trans_no;
-      exception.showError();
-      isdonedelete();
-      break;
-    }
-    if (i == maxlooping - 1) {
-      isdonedelete();
-    }
-  }
-
-  function isdonedelete() {
-    isdeleting.value = false;
-    if (countDeleted == maxlooping) {
-      // Jika Berhasil Menghapus Semua Purchase
-      iziSuccess('Success', `Successfully Deleted All Selected Purchase (${countDeleted} Records) `);
-      getApiPurchase();
-    } else if (countDeleted > 0 && countDeleted < maxlooping) {
-      iziSuccess('Success', `Successfully Deleted (${countDeleted}) of (${maxlooping}) Selected Purchase`);
-      getApiPurchase();
+  // Inner function
+  function manageerror(error, name) {
+    if (error.response.data.errors.general[0].includes('Integrity constraint violation')) {
+      showerror(title + ' ' + name + ' Already Used In Transaction Cannot Be Deleted');
     } else {
-      getApiPurchase();
+      showerror('ERROR!!! Internal Server Error');
     }
   }
-};
+}
 
-const approvePurchase = async (id, name) => {
-  try {
-    isdeleting.value = true;
-    await axios.patch(`${apiurl}/api/purchases/${branch}/${id}`, '', {
-      headers: {
-        Authorization: token
-      }
-    });
-    isdeleting.value = false;
-    getApiPurchase();
-    iziSuccess('Success', 'Successfully Approved Purchase ' + name);
-  } catch (error) {
-    isdeleting.value = false;
-    const exception = new ex(error);
-    exception.showError();
-  }
-};
-const bulkApprovePurchase = async (listPurchase = []) => {
-  let countApproved = 0;
-  let maxlooping = listPurchase.length;
-  for (let i = 0; i < listPurchase.length; i++) {
-    try {
-      isdeleting.value = true;
-      await axios.patch(`${apiurl}/api/purchases/${branch}/${listPurchase[i].id}`, '', {
-        headers: {
-          Authorization: token
-        }
-      });
-      countApproved++;
-    } catch (error) {
-      const exception = new ex(error);
-      exception.showError();
-      isdoneapprove();
-      break;
-    }
-    if (i == maxlooping - 1) {
-      isdoneapprove();
-    }
-  }
-
-  function isdoneapprove() {
-    isdeleting.value = false;
-    if (countApproved == maxlooping) {
-      // Jika Berhasil Mengapprove Semua Purchase
-      iziSuccess('Success', `Successfully Approved ALL Selected Purchase (${countApproved} Records)`);
-      getApiPurchase();
-    } else if (countApproved > 0 && countApproved < maxlooping) {
-      iziSuccess('Success', `Successfully Approved (${countApproved}) of (${maxlooping}) Selected Purchase`);
-      getApiPurchase();
-    } else {
-      getApiPurchase();
-    }
-  }
-};
-
-const collectSelectedPurchase = (data) => {
+// Suppply event vue3 datatable
+// Rowclick event datatable
+function collectSelectedSales(data) {
   // Get Only id and trans no
   if (data.length > 0) {
-    listSelectedPurchase.value = data.map((item) => {
+    listSelectedSales.value = data.map((item) => {
       let data = {
         id: item.id,
         trans_no: item.trans_no
@@ -288,50 +126,47 @@ const collectSelectedPurchase = (data) => {
       return data;
     });
   } else {
-    listSelectedPurchase.value = [];
+    listSelectedSales.value = [];
   }
-};
-
-//Jika perubahan yang terjadi pada table seprti mengklik pagination mengubah jumlah row dll
-const changeServer = (data) => {
+}
+//onchange event vue3 datatable (Jika perubahan yang terjadi pada vue 3 datatable seprti mengklik pagination / mengubah jumlah row dll)
+function changeServer(data) {
   params.current_page = data.current_page;
   params.pagesize = data.pagesize;
   params.search = data.search;
   params.orderby = data.sort_column;
   params.ascdesc = data.sort_direction;
 
-  getSearchApiPurchase();
-};
-const viewDelete = (data) => {
-  showconfirmdelete(data.id, data.trans_no, deletePurchase, 'Purchase');
-};
-const viewBulkDelete = () => {
-  showconfirmbulkdelete(listSelectedPurchase.value, bulkDeletePurchase, 'Purchase');
-};
-const viewEdit = (data) => {
+  getSearchApiSales();
+}
+
+//End Suppply event vue3 datatable
+
+// Crud Interraction per row and chekcbox/bulk crud
+function viewApprove(data) {
+  showconfirmapprove(data.id, data.trans_no, approveApiSales, title);
+}
+
+function viewBulkApprove() {
+  showconfirmbulkapprove(listSelectedSales.value, bulkApproveApiSales, title);
+}
+function viewDelete(data) {
+  showconfirmdelete(data.id, data.trans_no, deleteApiSales, title);
+}
+function viewBulkDelete() {
+  showconfirmbulkdelete(listSelectedSales.value, bulkApiDeleteSales, title);
+}
+function viewEdit(data) {
   sessionStorage.setItem('paramsid', enc.encrypt(data.id));
   router.push({
-    name: 'purchaseedit'
+    name: 'salesedit'
   });
-};
-const viewItem = (data) => {
-  emit('viewItem', {
-    data
-  });
-};
+}
 
-const viewApprove = (data) => {
-  showconfirmapprove(data.id, data.trans_no, approvePurchase, 'Purchase');
-};
+// End Crud Interraction per row and checkbox/bulk crud
 
-const viewBulkApprove = () => {
-  showconfirmbulkapprove(listSelectedPurchase.value, bulkApprovePurchase, 'Purchase');
-};
-const changeValue = () => {
-  getSearchApiPurchase();
-  checkAproval();
-};
-const checkAproval = () => {
+// Filter interraction
+function checkAproval() {
   if (params.is_approve == 'false') {
     enabledBulk.value = true;
     enabledCounter.value = true;
@@ -339,12 +174,217 @@ const checkAproval = () => {
     enabledBulk.value = false;
     enabledCounter.value = false;
   }
+}
+
+function changeValue() {
+  getSearchApiSales();
+  checkAproval();
+}
+
+// End Filter Interraction
+
+// ---------------------------------------------- End Function and subroutines
+
+// --------------------------------------------- Api Interraction
+async function getApiSales() {
+  try {
+    loading.value = true;
+    const paystatusboolean = JSON.parse(params.paystatus.toLowerCase());
+    const convertstartdate = Date.changeformat(params.startDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
+    const convertenddate = Date.changeformat(params.endDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
+    const responseData = await axios.get(
+      `${apiurl}${apiTrans}list/${branch}?orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&perpage=${params.pagesize}&startdate=${convertstartdate}&enddate=${convertenddate}&isapprove=${params.is_approve}&iscredit=${paystatusboolean}`,
+      {
+        headers: {
+          Authorization: token
+        }
+      }
+    );
+    let dataSales = responseData.data.data;
+    dataSales.map((item) => {
+      item.total_sales = formatRupiah1(parseFloat(item.total_sales));
+      item.other_fee = formatRupiah1(parseFloat(item.other_fee));
+      item.sales_ppn = formatRupiah1(parseFloat(item.sales_ppn));
+      item.grand_total = formatRupiah1(parseFloat(item.grand_total));
+      item.paid = formatRupiah1(parseFloat(item.paid));
+      item.change_amount = formatRupiah1(parseFloat(item.change_amount));
+      item.trans_date = Date.changeformat(item.trans_date, 'YYYY-MM-DD', 'DD/MM/YYYY');
+      return item;
+    });
+    loading.value = false;
+    let totalAllRows = responseData.data.meta.total;
+    total_rows.value = totalAllRows;
+    rows.value = dataSales;
+  } catch (error) {
+    loading.value = false;
+    erroHandle(error);
+  }
+}
+
+async function getSearchApiSales() {
+  loading.value = true;
+  const paystatusboolean = JSON.parse(params.paystatus.toLowerCase());
+  const convertstartdate = Date.changeformat(params.startDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
+  const convertenddate = Date.changeformat(params.endDate, 'DD/MM/YYYY', 'YYYY-MM-DD');
+  const convertsearch = encodeURIComponent(params.search);
+  try {
+    const responseData = await axios.get(
+      `${apiurl}${apiTrans}${branch}/search?key=${convertsearch}&filterby=${params.filterby}&orderby=${params.orderby}&ascdesc=${params.ascdesc}&page=${params.current_page}&perpage=${params.pagesize}&startdate=${convertstartdate}&enddate=${convertenddate}&isapprove=${params.is_approve}&iscredit=${paystatusboolean}`,
+      {
+        headers: {
+          Authorization: token
+        }
+      }
+    );
+    let dataSales = responseData.data.data;
+    let totalAllRows = responseData.data.meta.total;
+
+    // Format value purchase data
+    dataSales.map((item) => {
+      item.total_sales = formatRupiah1(parseFloat(item.total_sales));
+      item.other_fee = formatRupiah1(parseFloat(item.other_fee));
+      item.sales_ppn = formatRupiah1(parseFloat(item.sales_ppn));
+      item.grand_total = formatRupiah1(parseFloat(item.grand_total));
+      item.paid = formatRupiah1(parseFloat(item.paid));
+      item.change_amount = formatRupiah1(parseFloat(item.change_amount));
+      item.trans_date = Date.changeformat(item.trans_date, 'YYYY-MM-DD', 'DD/MM/YYYY');
+      return item;
+    });
+    total_rows.value = totalAllRows;
+    rows.value = dataSales;
+  } catch (error) {
+    erroHandle(error);
+  }
+
+  loading.value = false;
+}
+async function deleteApiSales(id, name) {
+  try {
+    isdeleting.value = true;
+    await axios.delete(`${apiurl}${apiTrans}${branch}/${id}`, {
+      headers: {
+        Authorization: token
+      }
+    });
+    isdeleting.value = false;
+    getApiSales();
+    iziSuccess('Success', `Successfully Deleted ${title} ${name}`);
+  } catch (error) {
+    isdeleting.value = false;
+    erroHandle(error, name);
+  }
+}
+
+async function bulkApiDeleteSales(listSales = []) {
+  let countDeleted = 0;
+  let maxlooping = listSales.length;
+  for (let i = 0; i < listSales.length; i++) {
+    try {
+      isdeleting.value = true;
+      await axios.delete(`${apiurl}${apiTrans}${branch}/${listSales[i].id}`, {
+        headers: {
+          Authorization: token
+        }
+      });
+      countDeleted++;
+    } catch (error) {
+      erroHandle(error, listSales[i].trans_no);
+      isdonedelete();
+      break;
+    }
+    if (i == maxlooping - 1) {
+      isdonedelete();
+    }
+  }
+
+  // inner function
+  function isdonedelete() {
+    isdeleting.value = false;
+    if (countDeleted == maxlooping) {
+      // Jika Berhasil Menghapus Semua Purchase
+      iziSuccess('Success', `Successfully Deleted All Selected ${title} (${countDeleted} Records) `);
+      getApiSales();
+    } else if (countDeleted > 0 && countDeleted < maxlooping) {
+      iziSuccess('Success', `Successfully Deleted (${countDeleted}) of (${maxlooping}) Selected ${title}`);
+      getApiSales();
+    } else {
+      getApiSales();
+    }
+  }
+}
+
+async function approveApiSales(id, name) {
+  try {
+    isdeleting.value = true;
+    await axios.patch(`${apiurl}${apiTrans}${branch}/${id}`, '', {
+      headers: {
+        Authorization: token
+      }
+    });
+    isdeleting.value = false;
+    getApiSales();
+    iziSuccess('Success', `Successfully Approved ${title} ${name}`);
+  } catch (error) {
+    isdeleting.value = false;
+    erroHandle(error);
+  }
+}
+
+async function bulkApproveApiSales(listSales = []) {
+  let countApproved = 0;
+  let maxlooping = listSales.length;
+  for (let i = 0; i < listSales.length; i++) {
+    try {
+      isdeleting.value = true;
+      await axios.patch(`${apiurl}${apiTrans}${branch}/${listSales[i].id}`, '', {
+        headers: {
+          Authorization: token
+        }
+      });
+      countApproved++;
+    } catch (error) {
+      erroHandle(error);
+      isdoneapprove();
+      break;
+    }
+    if (i == maxlooping - 1) {
+      isdoneapprove();
+    }
+  }
+
+  // inner function
+  function isdoneapprove() {
+    isdeleting.value = false;
+    if (countApproved == maxlooping) {
+      // Jika Berhasil Mengapprove Semua Sales
+      iziSuccess('Success', `Successfully Approved ALL Selected ${title} (${countApproved} Records)`);
+      getApiSales();
+    } else if (countApproved > 0 && countApproved < maxlooping) {
+      iziSuccess('Success', `Successfully Approved (${countApproved}) of (${maxlooping}) Selected ${title}`);
+      getApiSales();
+    } else {
+      getApiSales();
+    }
+  }
+}
+
+// ------------------------------------------------------------End Api Interraction
+
+// ----------------------------------------------Interraction with el -dialog
+const viewItem = (data) => {
+  emit('viewItem', {
+    data
+  });
 };
+// -----------------------------------------------end interraction with el-dialog
+
+// ----------------------------------LifeCycleHooks
 onMounted(() => {
-  setupDefault();
-  getApiPurchase();
+  setupDefaultParam();
+  getApiSales();
   checkAproval();
 });
+// ---------------------------------End Lifecyclehooks
 </script>
 <template>
   <div v-if="isdeleting" class="loading-overlay">
@@ -396,8 +436,8 @@ onMounted(() => {
         <select class="form-control mr-2" @change="changeValue" style="width: 180px" v-model="params.filterby">
           <option value="all" selected>All</option>
           <option value="trans_no">Transaction Number</option>
-          <option value="number_id_supplier">ID Supplier</option>
-          <option value="supplier_name">Supplier Name</option>
+          <option value="cust_no">Cust No</option>
+          <option value="cust_name">Cust Name</option>
           <option value="pic_name">Pic Name</option>
         </select>
         <input v-model="params.search" type="text" class="form-control" placeholder="Search..." style="max-width: 400px" />
@@ -422,9 +462,9 @@ onMounted(() => {
   </div>
 
   <!-- Bulk Button -->
-  <span class="badge badge-primary py-1 px-2 mr-3 ml-2" v-if="enabledCounter" style="font-size: 18px">{{ listSelectedPurchase.length }}</span>
-  <button class="btn btn-danger mr-2" @click="viewBulkDelete" v-if="listSelectedPurchase.length > 0"><i class="fas fa-trash"></i> Delete Selected</button>
-  <button class="btn btn-warning mr-2" @click="viewBulkApprove" v-if="listSelectedPurchase.length > 0"><i class="fas fa-check"></i> Approve Selected</button>
+  <span class="badge badge-primary py-1 px-2 mr-3 ml-2" v-if="enabledCounter" style="font-size: 18px">{{ listSelectedSales.length }}</span>
+  <button class="btn btn-danger mr-2" @click="viewBulkDelete" v-if="listSelectedSales.length > 0"><i class="fas fa-trash"></i> Delete Selected</button>
+  <button class="btn btn-warning mr-2" @click="viewBulkApprove" v-if="listSelectedSales.length > 0"><i class="fas fa-check"></i> Approve Selected</button>
 
   <!-- Table Purchase -->
   <div class="mt-2">
@@ -441,7 +481,7 @@ onMounted(() => {
       :sortable="true"
       :stickyHeader="true"
       height="600px"
-      @rowSelect="collectSelectedPurchase"
+      @rowSelect="collectSelectedSales"
       noDataContent="No records found in the database"
       :stickyFirstColumn="true"
     >
@@ -450,7 +490,7 @@ onMounted(() => {
         <span v-if="data.value.is_approve" class="badge badge-sm badge-primary">Approved</span>
         <span v-if="!data.value.is_approve" class="badge badge-sm badge-secondary">Not Approved</span>
       </template>
-      <template #is_credit="data">
+      <template #is_sales_credit="data">
         <span v-if="data.value.is_credit" class="badge badge-sm badge-secondary">Kredit</span>
         <span v-if="!data.value.is_credit" class="badge badge-sm badge-success">Cash</span>
       </template>
