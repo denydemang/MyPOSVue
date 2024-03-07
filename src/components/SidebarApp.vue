@@ -107,6 +107,8 @@ const ispurchaseedit = ref(false);
 const ispurchasereturn = ref(false);
 const ismastercustomer = ref(false);
 const issales = ref(false);
+const issalescreate = ref(false);
+const issalesedit = ref(false);
 const issalesreturn = ref(false);
 const isgrn = ref(false);
 const isinoutitem = ref(false);
@@ -216,13 +218,23 @@ const isActive = () => {
   } else {
     issales.value = false;
   }
+  if (route.name == 'salescreate') {
+    issalescreate.value = true;
+  } else {
+    issalescreate.value = false;
+  }
+  if (route.name == 'salesedit') {
+    issalesedit.value = true;
+  } else {
+    issalesedit.value = false;
+  }
   // MENU TRANSACTION - SALES TRANSACTION - SALES
   if (route.name == 'salesreturn') {
     issalesreturn.value = true;
   } else {
     issalesreturn.value = false;
   }
-  if (!ismastercustomer.value && !issales.value && !issalesreturn.value) {
+  if (!ismastercustomer.value && !issales.value && !issalesreturn.value && !issalescreate.value && !issalesedit.value) {
     $('.dropdwonsalestrans').stop(true, true).slideUp();
   }
 
@@ -248,6 +260,8 @@ const isActive = () => {
     iscompanyprofile.value = false;
   }
 };
+
+// Memberi Nama Aplikasi Di Sidebar Atas
 const getInitials = (text) => {
   let joinstring = '';
   const words = text.split(' ');
@@ -386,13 +400,17 @@ onBeforeUnmount(async () => {
         <!-- End Transaction Menu - Purchase -->
 
         <!-- Transaction Menu - Sales -->
-        <li class="nav-item dropdown" :class="{ active: ismastercustomer | issales | issalesreturn }" v-if="viewmenu.master_customer || viewmenu.sales || viewmenu.sales_return">
+        <li
+          class="nav-item dropdown"
+          :class="{ active: ismastercustomer | issales | issalesreturn | issalescreate | issalesedit }"
+          v-if="viewmenu.master_customer || viewmenu.sales || viewmenu.sales_return"
+        >
           <a href="#" class="nav-link has-dropdown"><i class="fas fa-th-large"></i> <span>Sales Transaction</span></a>
           <ul class="dropdown-menu dropdwonsalestrans">
             <li :class="{ active: ismastercustomer }" v-if="viewmenu.master_customer">
               <RouterLink class="nav-link" :to="{ name: 'mastercustomer' }">Master Customer</RouterLink>
             </li>
-            <li :class="{ active: issales }" v-if="viewmenu.sales"><RouterLink class="nav-link" :to="{ name: 'sales' }">Sales</RouterLink></li>
+            <li :class="{ active: issales | issalescreate | issalesedit }" v-if="viewmenu.sales"><RouterLink class="nav-link" :to="{ name: 'sales' }">Sales</RouterLink></li>
             <li :class="{ active: issalesreturn }" v-if="viewmenu.sales_return"><RouterLink class="nav-link" :to="{ name: 'salesreturn' }">Sales Return</RouterLink></li>
           </ul>
         </li>

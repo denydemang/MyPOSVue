@@ -14,6 +14,7 @@ import PurchaseManage from '@/views/admin/transaction/purchase/PurchaseManage.vu
 import PurchaseReturn from '@/views/admin/transaction/purchase/PurchaseReturn.vue';
 import MasterCustomer from '@/views/admin/transaction/sales/MasterCustomer.vue';
 import Sales from '@/views/admin/transaction/sales/Sales.vue';
+import SalesManage from '@/views/admin/transaction/sales/SalesManage.vue';
 import SalesReturn from '@/views/admin/transaction/sales/SalesReturn.vue';
 import GRN from '@/views/admin/inventory/GRN.vue';
 import INOUTITEM from '@/views/admin/inventory/INOUTITEM.vue';
@@ -172,6 +173,22 @@ const routes = [
         component: Sales,
         meta: {
           title: 'SALES TRANSACTION'
+        }
+      },
+      {
+        path: 'sales/create',
+        name: 'salescreate',
+        component: SalesManage,
+        meta: {
+          title: 'ADD NEW SALES TRANSACTION'
+        }
+      },
+      {
+        path: 'sales/edit',
+        name: 'salesedit',
+        component: SalesManage,
+        meta: {
+          title: 'EDIT SALES TRANSACTION'
         }
       },
       {

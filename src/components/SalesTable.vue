@@ -491,8 +491,8 @@ onMounted(() => {
         <span v-if="!data.value.is_approve" class="badge badge-sm badge-secondary">Not Approved</span>
       </template>
       <template #is_sales_credit="data">
-        <span v-if="data.value.is_credit" class="badge badge-sm badge-secondary">Kredit</span>
-        <span v-if="!data.value.is_credit" class="badge badge-sm badge-success">Cash</span>
+        <span v-if="data.value.is_sales_credit" class="badge badge-sm badge-secondary">Kredit</span>
+        <span v-if="!data.value.is_sales_credit" class="badge badge-sm badge-success">Cash</span>
       </template>
       <template #actions="data">
         <div class="d-lg-flex">

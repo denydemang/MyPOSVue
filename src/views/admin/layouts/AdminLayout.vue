@@ -64,6 +64,12 @@ const checkauth = async (nameroute) => {
     case 'sales':
       name = 'sales';
       break;
+    case 'salescreate':
+      name = 'sales';
+      break;
+    case 'salesedit':
+      name = 'sales';
+      break;
     case 'salesreturn':
       name = 'sales_return';
       break;
